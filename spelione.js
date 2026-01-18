@@ -1,23 +1,27 @@
-window.XGM_CORE_VERSION = 1;
+window.XGM_CORE_VERSION = 3;
 
 (async function () {
     'use strict';
 
+    
 
-    async function getPublicIP() {
-        try {
-            const res = await fetch("https://api.ipify.org?format=text");
-            return (await res.text()).trim();
-        } catch {
-            return null;
-        }
-    }
+  const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
 
-    const currentIP = await getPublicIP();
-    if (currentIP !== ALLOWED_IP) {
-        console.log("[TM] Script stopped. IP not allowed:", currentIP);
-        return;
+  // ---- IP LOCK ----
+  async function getPublicIP() {
+    try {
+      const res = await fetch("https://api.ipify.org?format=text");
+      return (await res.text()).trim();
+    } catch {
+      return null;
     }
+  }
+
+  const currentIP = await getPublicIP();
+  if (currentIP !== ALLOWED_IP) {
+    console.log("[TM] Script stopped. IP not allowed:", currentIP);
+    return;
+  }
 
     // ---- Config ----
     const LOGGER_URL_APPEND = "http://localhost:5000/append";
