@@ -1,12 +1,25 @@
-window.XGM_CORE_VERSION = 3;
+window.XGM_CORE_VERSION = 4;
 
 (async function () {
     'use strict';
 
-    
+    console.log(`%c[XGM] Core Version ${window.XGM_CORE_VERSION} loaded`, 
+                'color: #00ff00; font-weight: bold; font-size: 14px;');
 
   const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
 
+
+    // Prevent multiple instances
+    if (unsafeWindow.__XGM_RUNNING) {
+        console.log("[TM] Already running, aborting duplicate");
+        return;
+    }
+    unsafeWindow.__XGM_RUNNING = true;
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        unsafeWindow.__XGM_RUNNING = false;
+    });
   // ---- IP LOCK ----
   async function getPublicIP() {
     try {
@@ -1495,15 +1508,30 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     }
 
     async function waitFor(selector, timeout = 5000) {
-        const start = Date.now();
-        while (Date.now() - start < timeout) {
+    const existing = document.querySelector(selector);
+    if (existing) return existing;
+    
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+            observer.disconnect();
+            resolve(null);
+        }, timeout);
+        
+        const observer = new MutationObserver(() => {
             const el = document.querySelector(selector);
-            if (el) return el;
-            await sleep(400);
-        }
-        return null;
-    }
-
+            if (el) {
+                clearTimeout(timer);
+                observer.disconnect();
+                resolve(el);
+            }
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
     function setNativeValue(el, value) {
         const setter = Object.getOwnPropertyDescriptor(
             Object.getPrototypeOf(el),
