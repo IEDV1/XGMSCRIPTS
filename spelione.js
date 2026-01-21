@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 5;
+window.XGM_CORE_VERSION = 6;
 
 (async function () {
     'use strict';
@@ -1578,28 +1578,54 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     if (form) {
         const img = form.querySelector('#spelioneImg');
         if (!img) return;
-
-        // wait until img.src is actually set
+        
+        // Wait for the image to actually load
         let src = "";
-        for (let i = 0; i < 10; i++) {
-            if (img.src) {
+        
+        // If image is already loaded
+        if (img.complete && img.naturalHeight !== 0) {
+            src = img.src;
+        } else {
+            // Wait for image to load
+            try {
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Image load timeout'));
+                    }, 5000); // 5 second timeout
+                    
+                    img.onload = () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    };
+                    
+                    img.onerror = () => {
+                        clearTimeout(timeout);
+                        reject(new Error('Image failed to load'));
+                    };
+                    
+                    // If src is already set, the events might have already fired
+                    if (img.complete) {
+                        clearTimeout(timeout);
+                        resolve();
+                    }
+                });
                 src = img.src;
-                break;
+            } catch (error) {
+                console.error('Image loading error:', error);
+                return;
             }
-            await sleep(250); // max ~400ms total
         }
+        
         if (!src) return;
-
+        
         const imgSrc = new URL(src).pathname.slice(1);
         const lines = localFileContents.trim().split('\n');
-
         for (const line of lines) {
             const [s, ...words] = line.trim().split(/\s+/);
             if (s === imgSrc) {
                 const input = document.querySelector('#word');
                 const submit = document.querySelector('input[value="Spėti"]');
                 if (!input || !submit) return;
-
                 setNativeValue(input, words.join(' '));
                 submit.click();
                 return;
