@@ -1,40 +1,57 @@
-window.XGM_CORE_VERSION = 4;
+window.XGM_CORE_VERSION = 5;
 
 (async function () {
     'use strict';
 
     console.log(`%c[XGM] Core Version ${window.XGM_CORE_VERSION} loaded`, 
                 'color: #00ff00; font-weight: bold; font-size: 14px;');
+    
+    const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
+    const MAX_RETRIES = 10;        // total attempts
+    const RETRY_DELAY = 1500;      // ms between checks
 
-  const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
 
-
-    // Prevent multiple instances
     if (unsafeWindow.__XGM_RUNNING) {
-        console.log("[TM] Already running, aborting duplicate");
-        return;
+    console.log("[TM] Already running, aborting duplicate");
+    return;
     }
     unsafeWindow.__XGM_RUNNING = true;
     
-    // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
         unsafeWindow.__XGM_RUNNING = false;
     });
-  // ---- IP LOCK ----
-  async function getPublicIP() {
-    try {
-      const res = await fetch("https://api.ipify.org?format=text");
-      return (await res.text()).trim();
-    } catch {
-      return null;
+    
+    // ---- IP CHECK ----
+    async function getPublicIP() {
+        try {
+            const res = await fetch("https://api.ipify.org?format=text", {
+                cache: "no-store"
+            });
+            return (await res.text()).trim();
+        } catch {
+            return null;
+        }
     }
-  }
-
-  const currentIP = await getPublicIP();
-  if (currentIP !== ALLOWED_IP) {
-    console.log("[TM] Script stopped. IP not allowed:", currentIP);
-    return;
-  }
+    
+    async function waitForAllowedIP() {
+        for (let i = 1; i <= MAX_RETRIES; i++) {
+            const ip = await getPublicIP();
+    
+            console.log(`[TM] IP check ${i}/${MAX_RETRIES}:`, ip);
+    
+            if (ip === ALLOWED_IP) {
+                console.log("[TM] IP allowed, continuing");
+                return true;
+            }
+    
+            await new Promise(r => setTimeout(r, RETRY_DELAY));
+        }
+    
+        console.log("[TM] Script stopped. IP not allowed after retries.");
+        return false;
+    }
+    
+    if (!(await waitForAllowedIP())) return;
 
     // ---- Config ----
     const LOGGER_URL_APPEND = "http://localhost:5000/append";
