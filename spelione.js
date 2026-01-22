@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 6;
+window.XGM_CORE_VERSION = 7;
 
 (async function () {
     'use strict';
