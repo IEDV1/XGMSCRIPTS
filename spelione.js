@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 9;
+window.XGM_CORE_VERSION = 10;
 
 (async function () {
     'use strict';
@@ -1559,39 +1559,38 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
         el.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    // ---- Instant redirect: "Kitas klausimas" (FAST) ----
-    const link = document.querySelector('a[href="spelione"]');
-    if (link && link.textContent.includes("Kitas klausimas")) {
-        console.log("[TM] Found 'Kitas klausimas', redirecting NOW");
-        window.location.href = "https://xgm.lt/spelione";
-        return;
-    }
+    // ---- Instant redirect: "Kitas klausimas" ----
+    (function() {
+        const link = document.querySelector('a[href="spelione"]');
+        if (link && link.textContent.includes("Kitas klausimas")) {
+            window.location.href = "https://xgm.lt/spelione";
+            return;
+        }
+    })();
 
-    // ---- Spelione (FAST - no unnecessary waits) ----
-    const form = document.querySelector('form[action="spelione"]');
-    if (form) {
+    // ---- Spelione ----
+    (function() {
+        const form = document.querySelector('form[action="spelione"]');
+        if (!form) return;
+        
         const img = form.querySelector('#spelioneImg');
-        if (img && img.src) {
-            const imgSrc = new URL(img.src).pathname.slice(1);
-            const lines = localFileContents.trim().split('\n');
-            
-            for (const line of lines) {
-                const [s, ...words] = line.trim().split(/\s+/);
-                if (s === imgSrc) {
-                    console.log("[TM] Found match instantly:", words.join(' '));
-                    const input = document.querySelector('#word');
-                    const submit = document.querySelector('input[value="Spėti"]');
-                    
-                    if (input && submit) {
-                        setNativeValue(input, words.join(' '));
-                        submit.click();
-                        console.log("[TM] Submitted answer FAST");
-                    }
-                    break;
-                }
+        if (!img || !img.src) return;
+        
+        const imgSrc = new URL(img.src).pathname.slice(1);
+        const lines = localFileContents.trim().split('\n');
+        
+        for (const line of lines) {
+            const [s, ...words] = line.trim().split(/\s+/);
+            if (s === imgSrc) {
+                const input = document.querySelector('#word');
+                const submit = document.querySelector('input[value="Spėti"]');
+                if (!input || !submit) return;
+                setNativeValue(input, words.join(' '));
+                submit.click();
+                return;
             }
         }
-    }
+    })();
 
     // ---- data.txt helpers ----
     async function fetchDataTxt() {
