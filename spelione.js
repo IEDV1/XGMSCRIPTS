@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 11;
+window.XGM_CORE_VERSION = 12;
 
 (async function () {
     'use strict';
@@ -1567,7 +1567,7 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
                 window.location.href = "https://xgm.lt/spelione";
                 return;
             }
-            await sleep(50);
+            await sleep(200);
         }
     }
 
@@ -1595,7 +1595,7 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
                     }
                     break;
                 }
-                await sleep(50);
+                await sleep(200);
             }
         }
     }
