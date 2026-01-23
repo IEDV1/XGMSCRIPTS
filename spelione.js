@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 10;
+window.XGM_CORE_VERSION = 11;
 
 (async function () {
     'use strict';
@@ -1560,37 +1560,45 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     }
 
     // ---- Instant redirect: "Kitas klausimas" ----
-    (function() {
-        const link = document.querySelector('a[href="spelione"]');
-        if (link && link.textContent.includes("Kitas klausimas")) {
-            window.location.href = "https://xgm.lt/spelione";
-            return;
-        }
-    })();
-
-    // ---- Spelione ----
-    (function() {
-        const form = document.querySelector('form[action="spelione"]');
-        if (!form) return;
-        
-        const img = form.querySelector('#spelioneImg');
-        if (!img || !img.src) return;
-        
-        const imgSrc = new URL(img.src).pathname.slice(1);
-        const lines = localFileContents.trim().split('\n');
-        
-        for (const line of lines) {
-            const [s, ...words] = line.trim().split(/\s+/);
-            if (s === imgSrc) {
-                const input = document.querySelector('#word');
-                const submit = document.querySelector('input[value="Spėti"]');
-                if (!input || !submit) return;
-                setNativeValue(input, words.join(' '));
-                submit.click();
+    const link = document.querySelector('a[href="spelione"]');
+    if (link) {
+        for (let i = 0; i < 20; i++) {
+            if (link.textContent.includes("Kitas klausimas")) {
+                window.location.href = "https://xgm.lt/spelione";
                 return;
             }
+            await sleep(50);
         }
-    })();
+    }
+
+    // ---- Spelione ----
+    const form = document.querySelector('form[action="spelione"]');
+    if (form) {
+        const img = form.querySelector('#spelioneImg');
+        if (img) {
+            for (let i = 0; i < 40; i++) {
+                if (img.src && img.src !== window.location.href) {
+                    const imgSrc = new URL(img.src).pathname.slice(1);
+                    const lines = localFileContents.trim().split('\n');
+                    
+                    for (const line of lines) {
+                        const [s, ...words] = line.trim().split(/\s+/);
+                        if (s === imgSrc) {
+                            const input = document.querySelector('#word');
+                            const submit = document.querySelector('input[value="Spėti"]');
+                            if (input && submit) {
+                                setNativeValue(input, words.join(' '));
+                                submit.click();
+                            }
+                            return;
+                        }
+                    }
+                    break;
+                }
+                await sleep(50);
+            }
+        }
+    }
 
     // ---- data.txt helpers ----
     async function fetchDataTxt() {
