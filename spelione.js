@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 7;
+window.XGM_CORE_VERSION = 8;
 
 (async function () {
     'use strict';
@@ -7,13 +7,12 @@ window.XGM_CORE_VERSION = 7;
                 'color: #00ff00; font-weight: bold; font-size: 14px;');
     
     const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
-    const MAX_RETRIES = 10;        // total attempts
-    const RETRY_DELAY = 1500;      // ms between checks
-
+    const MAX_RETRIES = 10;
+    const RETRY_DELAY = 1500;
 
     if (unsafeWindow.__XGM_RUNNING) {
-    console.log("[TM] Already running, aborting duplicate");
-    return;
+        console.log("[TM] Already running, aborting duplicate");
+        return;
     }
     unsafeWindow.__XGM_RUNNING = true;
     
@@ -1525,30 +1524,31 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     }
 
     async function waitFor(selector, timeout = 5000) {
-    const existing = document.querySelector(selector);
-    if (existing) return existing;
-    
-    return new Promise((resolve) => {
-        const timer = setTimeout(() => {
-            observer.disconnect();
-            resolve(null);
-        }, timeout);
+        const existing = document.querySelector(selector);
+        if (existing) return existing;
         
-        const observer = new MutationObserver(() => {
-            const el = document.querySelector(selector);
-            if (el) {
-                clearTimeout(timer);
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
                 observer.disconnect();
-                resolve(el);
-            }
+                resolve(null);
+            }, timeout);
+            
+            const observer = new MutationObserver(() => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    clearTimeout(timer);
+                    observer.disconnect();
+                    resolve(el);
+                }
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
         });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    });
-}
+    }
+
     function setNativeValue(el, value) {
         const setter = Object.getOwnPropertyDescriptor(
             Object.getPrototypeOf(el),
@@ -1559,80 +1559,146 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
         el.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    // ---- Instant redirect: "Kitas klausimas" ----
-    const link = document.querySelector('a[href="spelione"]');
-    if (link) {
-        for (let i = 0; i < 10; i++) {
-            if (link.textContent.includes("Kitas klausimas")) {
-                window.location.href = "https://xgm.lt/spelione";
-                return;
-            }
-            await sleep(250); // max ~400ms total
+    // ---- Wait for image to have valid src ----
+    async function waitForImageSrc(img, timeout = 10000) {
+        if (img.src && img.src !== window.location.href && !img.src.endsWith('/')) {
+            return img.src;
         }
+
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                observer.disconnect();
+                reject(new Error('Image src timeout'));
+            }, timeout);
+
+            const checkSrc = () => {
+                if (img.src && img.src !== window.location.href && !img.src.endsWith('/')) {
+                    clearTimeout(timer);
+                    observer.disconnect();
+                    resolve(img.src);
+                }
+            };
+
+            const observer = new MutationObserver(checkSrc);
+            observer.observe(img, {
+                attributes: true,
+                attributeFilter: ['src']
+            });
+
+            // Check immediately in case it's already set
+            checkSrc();
+        });
     }
 
+    // ---- Instant redirect: "Kitas klausimas" ----
+    async function handleKitasKlausimas() {
+        const link = await waitFor('a[href="spelione"]', 3000);
+        if (!link) {
+            console.log("[TM] No 'Kitas klausimas' link found");
+            return false;
+        }
 
-    
+        // Wait for text content to load
+        for (let i = 0; i < 20; i++) {
+            if (link.textContent.includes("Kitas klausimas")) {
+                console.log("[TM] Found 'Kitas klausimas', redirecting");
+                window.location.href = "https://xgm.lt/spelione";
+                return true;
+            }
+            await sleep(200);
+        }
+        
+        console.log("[TM] Link found but no 'Kitas klausimas' text");
+        return false;
+    }
+
     // ---- Spelione (src-safe) ----
-    const form = document.querySelector('form[action="spelione"]');
-    if (form) {
+    async function handleSpelione() {
+        const form = document.querySelector('form[action="spelione"]');
+        if (!form) {
+            console.log("[TM] No spelione form found");
+            return false;
+        }
+
         const img = form.querySelector('#spelioneImg');
-        if (!img) return;
+        if (!img) {
+            console.log("[TM] No image found in form");
+            return false;
+        }
+
+        console.log("[TM] Waiting for image src...");
         
-        // Wait for the image to actually load
-        let src = "";
-        
-        // If image is already loaded
-        if (img.complete && img.naturalHeight !== 0) {
-            src = img.src;
-        } else {
-            // Wait for image to load
+        let src;
+        try {
+            src = await waitForImageSrc(img, 10000);
+            console.log("[TM] Image src loaded:", src);
+        } catch (error) {
+            console.error('[TM] Image src error:', error);
+            return false;
+        }
+
+        // Now wait for the actual image to load
+        if (!img.complete || img.naturalHeight === 0) {
+            console.log("[TM] Waiting for image to fully load...");
             try {
                 await new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => {
                         reject(new Error('Image load timeout'));
-                    }, 5000); // 5 second timeout
+                    }, 10000);
                     
-                    img.onload = () => {
+                    const checkComplete = () => {
+                        if (img.complete && img.naturalHeight !== 0) {
+                            clearTimeout(timeout);
+                            resolve();
+                        }
+                    };
+
+                    img.addEventListener('load', () => {
                         clearTimeout(timeout);
                         resolve();
-                    };
+                    });
                     
-                    img.onerror = () => {
+                    img.addEventListener('error', () => {
                         clearTimeout(timeout);
                         reject(new Error('Image failed to load'));
-                    };
-                    
-                    // If src is already set, the events might have already fired
-                    if (img.complete) {
-                        clearTimeout(timeout);
-                        resolve();
-                    }
+                    });
+
+                    // Check if already complete
+                    checkComplete();
                 });
-                src = img.src;
             } catch (error) {
-                console.error('Image loading error:', error);
-                return;
+                console.error('[TM] Image loading error:', error);
+                return false;
             }
         }
-        
-        if (!src) return;
+
+        console.log("[TM] Image fully loaded, matching answer...");
         
         const imgSrc = new URL(src).pathname.slice(1);
         const lines = localFileContents.trim().split('\n');
+        
         for (const line of lines) {
             const [s, ...words] = line.trim().split(/\s+/);
             if (s === imgSrc) {
+                console.log("[TM] Found match:", words.join(' '));
                 const input = document.querySelector('#word');
                 const submit = document.querySelector('input[value="Spėti"]');
-                if (!input || !submit) return;
+                
+                if (!input || !submit) {
+                    console.log("[TM] Input or submit button not found");
+                    return false;
+                }
+                
                 setNativeValue(input, words.join(' '));
+                await sleep(100); // Small delay before clicking
                 submit.click();
-                return;
+                return true;
             }
         }
+        
+        console.log("[TM] No matching answer found for:", imgSrc);
+        return false;
     }
-
 
     // ---- data.txt helpers ----
     async function fetchDataTxt() {
@@ -1694,48 +1760,40 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     }
 
     function handleBans() {
-    if (document.body.innerText.includes("Norėdami nusiimti ban, siųskite")) {
+        if (document.body.innerText.includes("Norėdami nusiimti ban, siųskite")) {
+            localStorage.clear();
+            sessionStorage.clear();
 
-        // 1. Clear localStorage & sessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // 2. Clear cookies for current domain
-        document.cookie.split(";").forEach(cookie => {
-            const name = cookie.split("=")[0].trim();
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-        });
-
-        // 3. Clear Cache API (service worker caches)
-        if ('caches' in window) {
-            caches.keys().then(keys => {
-                keys.forEach(key => caches.delete(key));
+            document.cookie.split(";").forEach(cookie => {
+                const name = cookie.split("=")[0].trim();
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
             });
-        }
 
-        // 4. Clear IndexedDB
-        if ('indexedDB' in window && indexedDB.databases) {
-            indexedDB.databases().then(dbs => {
-                dbs.forEach(db => {
-                    if (db.name) indexedDB.deleteDatabase(db.name);
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    keys.forEach(key => caches.delete(key));
                 });
-            });
-        }
+            }
 
-        // 5. Unregister service workers (important!)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(reg => reg.unregister());
-            });
-        }
+            if ('indexedDB' in window && indexedDB.databases) {
+                indexedDB.databases().then(dbs => {
+                    dbs.forEach(db => {
+                        if (db.name) indexedDB.deleteDatabase(db.name);
+                    });
+                });
+            }
 
-        // 6. Redirect after a short delay to ensure cleanup
-        setTimeout(() => {
-            window.location.href = "https://xgm.lt/index";
-        }, 300);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => reg.unregister());
+                });
+            }
+
+            setTimeout(() => {
+                window.location.href = "https://xgm.lt/index";
+            }, 300);
+        }
     }
-}
-
 
     function handleEurInput() {
         const form = document.querySelector("form[action='game?siusti_litu&kam=navy']");
@@ -1750,7 +1808,6 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
         const available = parseFloat(match[1].replace(",", "."));
         const amount = available - 0.01;
 
-        // If amount is less than 0.01 → logout
         if (amount < 0.01) {
             window.location.href = "https://xgm.lt/game?atsijungti";
             return;
@@ -1772,9 +1829,16 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     await handleLogin();
     handleChatRedirect();
     handleAlreadyAnswered();
-    handleLoggedOut()
+    handleLoggedOut();
+    handleBans();
+    
+    // Try "Kitas klausimas" first, if it doesn't redirect, try Spelione
+    const redirected = await handleKitasKlausimas();
+    if (!redirected) {
+        await handleSpelione();
+    }
+    
     handleEurInput();
     handleTransferComplete();
-    handleBans()
 
 })();
