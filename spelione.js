@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 8;
+window.XGM_CORE_VERSION = 9;
 
 (async function () {
     'use strict';
@@ -1559,145 +1559,38 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
         el.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    // ---- Wait for image to have valid src ----
-    async function waitForImageSrc(img, timeout = 10000) {
-        if (img.src && img.src !== window.location.href && !img.src.endsWith('/')) {
-            return img.src;
-        }
-
-        return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                observer.disconnect();
-                reject(new Error('Image src timeout'));
-            }, timeout);
-
-            const checkSrc = () => {
-                if (img.src && img.src !== window.location.href && !img.src.endsWith('/')) {
-                    clearTimeout(timer);
-                    observer.disconnect();
-                    resolve(img.src);
-                }
-            };
-
-            const observer = new MutationObserver(checkSrc);
-            observer.observe(img, {
-                attributes: true,
-                attributeFilter: ['src']
-            });
-
-            // Check immediately in case it's already set
-            checkSrc();
-        });
+    // ---- Instant redirect: "Kitas klausimas" (FAST) ----
+    const link = document.querySelector('a[href="spelione"]');
+    if (link && link.textContent.includes("Kitas klausimas")) {
+        console.log("[TM] Found 'Kitas klausimas', redirecting NOW");
+        window.location.href = "https://xgm.lt/spelione";
+        return;
     }
 
-    // ---- Instant redirect: "Kitas klausimas" ----
-    async function handleKitasKlausimas() {
-        const link = await waitFor('a[href="spelione"]', 3000);
-        if (!link) {
-            console.log("[TM] No 'Kitas klausimas' link found");
-            return false;
-        }
-
-        // Wait for text content to load
-        for (let i = 0; i < 20; i++) {
-            if (link.textContent.includes("Kitas klausimas")) {
-                console.log("[TM] Found 'Kitas klausimas', redirecting");
-                window.location.href = "https://xgm.lt/spelione";
-                return true;
-            }
-            await sleep(200);
-        }
-        
-        console.log("[TM] Link found but no 'Kitas klausimas' text");
-        return false;
-    }
-
-    // ---- Spelione (src-safe) ----
-    async function handleSpelione() {
-        const form = document.querySelector('form[action="spelione"]');
-        if (!form) {
-            console.log("[TM] No spelione form found");
-            return false;
-        }
-
+    // ---- Spelione (FAST - no unnecessary waits) ----
+    const form = document.querySelector('form[action="spelione"]');
+    if (form) {
         const img = form.querySelector('#spelioneImg');
-        if (!img) {
-            console.log("[TM] No image found in form");
-            return false;
-        }
-
-        console.log("[TM] Waiting for image src...");
-        
-        let src;
-        try {
-            src = await waitForImageSrc(img, 10000);
-            console.log("[TM] Image src loaded:", src);
-        } catch (error) {
-            console.error('[TM] Image src error:', error);
-            return false;
-        }
-
-        // Now wait for the actual image to load
-        if (!img.complete || img.naturalHeight === 0) {
-            console.log("[TM] Waiting for image to fully load...");
-            try {
-                await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Image load timeout'));
-                    }, 10000);
+        if (img && img.src) {
+            const imgSrc = new URL(img.src).pathname.slice(1);
+            const lines = localFileContents.trim().split('\n');
+            
+            for (const line of lines) {
+                const [s, ...words] = line.trim().split(/\s+/);
+                if (s === imgSrc) {
+                    console.log("[TM] Found match instantly:", words.join(' '));
+                    const input = document.querySelector('#word');
+                    const submit = document.querySelector('input[value="Spėti"]');
                     
-                    const checkComplete = () => {
-                        if (img.complete && img.naturalHeight !== 0) {
-                            clearTimeout(timeout);
-                            resolve();
-                        }
-                    };
-
-                    img.addEventListener('load', () => {
-                        clearTimeout(timeout);
-                        resolve();
-                    });
-                    
-                    img.addEventListener('error', () => {
-                        clearTimeout(timeout);
-                        reject(new Error('Image failed to load'));
-                    });
-
-                    // Check if already complete
-                    checkComplete();
-                });
-            } catch (error) {
-                console.error('[TM] Image loading error:', error);
-                return false;
-            }
-        }
-
-        console.log("[TM] Image fully loaded, matching answer...");
-        
-        const imgSrc = new URL(src).pathname.slice(1);
-        const lines = localFileContents.trim().split('\n');
-        
-        for (const line of lines) {
-            const [s, ...words] = line.trim().split(/\s+/);
-            if (s === imgSrc) {
-                console.log("[TM] Found match:", words.join(' '));
-                const input = document.querySelector('#word');
-                const submit = document.querySelector('input[value="Spėti"]');
-                
-                if (!input || !submit) {
-                    console.log("[TM] Input or submit button not found");
-                    return false;
+                    if (input && submit) {
+                        setNativeValue(input, words.join(' '));
+                        submit.click();
+                        console.log("[TM] Submitted answer FAST");
+                    }
+                    break;
                 }
-                
-                setNativeValue(input, words.join(' '));
-                await sleep(100); // Small delay before clicking
-                submit.click();
-                return true;
             }
         }
-        
-        console.log("[TM] No matching answer found for:", imgSrc);
-        return false;
     }
 
     // ---- data.txt helpers ----
@@ -1831,13 +1724,6 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     handleAlreadyAnswered();
     handleLoggedOut();
     handleBans();
-    
-    // Try "Kitas klausimas" first, if it doesn't redirect, try Spelione
-    const redirected = await handleKitasKlausimas();
-    if (!redirected) {
-        await handleSpelione();
-    }
-    
     handleEurInput();
     handleTransferComplete();
 
