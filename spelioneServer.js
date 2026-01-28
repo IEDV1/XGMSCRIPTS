@@ -1,0 +1,1737 @@
+window.XGM_CORE_VERSION = 13;
+
+(async function () {
+    'use strict';
+
+    console.log(`%c[XGM] Core Version ${window.XGM_CORE_VERSION} loaded`, 
+                'color: #00ff00; font-weight: bold; font-size: 14px;');
+    
+    const ALLOWED_IP = unsafeWindow.PROFILE_CONFIG.ALLOWED_IP;
+    const MAX_RETRIES = 10;
+    const RETRY_DELAY = 1500;
+
+    if (unsafeWindow.__XGM_RUNNING) {
+        console.log("[TM] Already running, aborting duplicate");
+        return;
+    }
+    unsafeWindow.__XGM_RUNNING = true;
+    
+    window.addEventListener('beforeunload', () => {
+        unsafeWindow.__XGM_RUNNING = false;
+    });
+    
+    // ---- IP CHECK ----
+    async function getPublicIP() {
+        try {
+            const res = await fetch("https://api.ipify.org?format=text", {
+                cache: "no-store"
+            });
+            return (await res.text()).trim();
+        } catch {
+            return null;
+        }
+    }
+    
+    async function waitForAllowedIP() {
+        for (let i = 1; i <= MAX_RETRIES; i++) {
+            const ip = await getPublicIP();
+    
+            console.log(`[TM] IP check ${i}/${MAX_RETRIES}:`, ip);
+    
+            if (ip === ALLOWED_IP) {
+                console.log("[TM] IP allowed, continuing");
+                return true;
+            }
+    
+            await new Promise(r => setTimeout(r, RETRY_DELAY));
+        }
+    
+        console.log("[TM] Script stopped. IP not allowed after retries.");
+        return false;
+    }
+    
+    if (!(await waitForAllowedIP())) return;
+
+    // ---- Config ----
+    const LOGGER_URL_APPEND = "http://www.684313168484.space/append";
+    const LOGGER_URL_DELETE = "http://www.684313168484.space/delete";
+    const LOGGER_URL_VIEW   = "http://www.684313168484.space/view";
+
+    const localFileContents = `
+images/Spelione/uALCT1QYCyLJxHI.png tiramisu
+images/Spelione/neC9N119WhpAyOT.png arbatpinigiai
+images/Spelione/JXLr8hHVhdCtau1.png suris
+images/Spelione/6QANOnTgsfebFiB.jpg strazdas
+images/Spelione/rrjUaQw2qc5x4En.png nuodai
+images/Spelione/Yc2Th8zX1V2IuEW.jpg Stalagmitai
+images/Spelione/ViJh9D3pgapZ8gp.png kelmas
+images/Spelione/lEPrK74r1oTQzvE.jpg kivircas
+images/Spelione/2Rd9DvifQo2NIeG.jpg ORANGUTANAS
+images/Spelione/ffH5B8t0CPSEyAq.png stiklainis
+images/Spelione/SD34YKLXZVfINGm.jpg LEGIONIERIUS
+images/Spelione/0nSM40161p905010661a9420251201y0dy102441Ph331370100y0104m834St0u0un9M921490a092a9206M52.jpg gedimino pilis
+images/Spelione/zLJN0xXq1Y6EHoa.jpg stiprus
+images/Spelione/CWO4YpMzISSGBMR.jpg sakalas
+images/Spelione/jYQsu7plEJ5pvDb.png liutas
+images/Spelione/413M111n212302u22n01371a1yty08493Spua1M4S2a1705050007001455h21010016010y59M1004dP9m2119.jpg santuoka
+images/Spelione/ZFuWMkQGDvIzIDB.png astuoni
+images/Spelione/tmAH1CXe7CS3m0o.png NEKTARAS
+images/Spelione/S8ZS04uzeJFaRFC.jpg gedos stulpas
+images/Spelione/KTIv9kGsKuRBMyS.png piemuo
+images/Spelione/HOwJD4FOaAXzwPQ.png lazdele
+images/Spelione/flOyNwGXPs22icb.jpg spa
+images/Spelione/lRmOz687cmkRqlr.jpg plysys
+images/Spelione/1yyp5XhE7Arn9wt.png vilna
+images/Spelione/h8hmQZOIlfcbLxn.png asara
+images/Spelione/GB5CGTaTf47RC73.jp skale
+images/Spelione/kDuOFNGAlRZLs3i.png eduonis
+images/Spelione/d0mcbLHd6OGbS0I.jpg gaigalas
+images/Spelione/T4pQ7Bu8vStCe62.jpg DOZATORIUS
+images/Spelione/hq9T5Z5iwgPpS1S.jpg PARTENONAS
+images/Spelione/a5py7U2hoFUBVRH.png niurus
+images/Spelione/Kbz8oed8vVaB1yW.png uzuolaidos
+images/Spelione/9999My7a1y10539271970a2191620e1p9sT121u01007M1t20a403m955T1940590924y210eu1690Pd39M1h393.jpg gemalas
+images/Spelione/TCvHeVtRsStNT2X.jpg feja
+images/Spelione/LxyR8wUkMB3Q8iQ.jpg santaupos
+images/Spelione/f3NmPBXhsaDt2wa.png zieve
+images/Spelione/xna9SBwpMlSQ60B.jpg jakas
+images/Spelione/uuYpZtcyzXNVKK0.jpg rietuve
+images/Spelione/fdChyR1cfyUuX8U.jpg stulpas
+images/Spelione/sKuMPhJU6Erabu8.jpg trimitas
+images/Spelione/n1NHhLICBGDGP9c.jpg anciasnapis
+images/Spelione/ZaQiP4Kj4C5E2nx.jpg verzle
+images/Spelione/tnu2Zby7YVRCyi1.jpg alpinistas
+images/Spelione/c6v0qOWzoIsLgbd.png piesti
+images/Spelione/8WiIC0kLCg9xUAU.jpg mada
+images/Spelione/Hu21XiuwNXoinQY.png skaiciuoti
+images/Spelione/atKmvY8ElpGpGy4.jpg kostiumas
+images/Spelione/IygjBI3a7s81qEt.jpg krateris
+images/Spelione/2J9yzEbwtUrGJfy.jpg PROFESORIUS
+images/Spelione/4ExGDyEhtUvidkF.png riesutai
+images/Spelione/Es6UJtJwXK2uPCd.png skutimas
+images/Spelione/GyPPnNyqJPyIant.jpg ausintuvas
+images/Spelione/a3OGQihKzlRRtbY.jpg graztas
+images/Spelione/AzbHYxJhl23qgen.png citrina
+images/Spelione/bMjqRmMhEesTIWo.jpg zalias
+images/Spelione/nPOPl14F5VFMkXK.png presas
+images/Spelione/P0cAURHozmtLFIN.png du
+images/Spelione/LTnHYElnnjb6eXs.png virti
+images/Spelione/77UHtBZFTbrJWsp.jpg vynuoges
+images/Spelione/NRLEubl4g8YQPys.jpg naktis
+images/Spelione/JBxUqgZQIpCJYiS.png reklama
+images/Spelione/T2d7oMJk2CiccXS.png gandras
+images/Spelione/NFjcjYUIH2oqUJX.png siksnosparnis
+images/Spelione/XVedlYcDbRWCLoM.png piratas
+images/Spelione/zPP5tWq1J7IguLD.jpg purksti
+images/Spelione/3Y5lVUmY8K3q43W.jpg iskreipimas
+images/Spelione/GrhlmWuPISnAZrc.png septyni
+images/Spelione/NeEAAaOd7XTyO90.jpg ziurkenas
+images/Spelione/7H3l71tbCVYLBA8.png futbolas
+images/Spelione/jXPebU5WIzxhHvF.png triusis
+images/Spelione/FH8KYAZDAcNKdyS.jpg puse
+images/Spelione/K1ZzIMYgm3je6P7.png bite
+images/Spelione/R3WXbx9DkvTtD3T.jpg GIROKOMPASAS
+images/Spelione/m9G75gdIVSn5PkL.jpg sidabras
+images/Spelione/0QT8WmwWYwb9oa2.jpg grikiai
+images/Spelione/BmOFcyhLe0oHW4A.jpg pasirinkimas
+images/Spelione/VcxZsnfiCtIBZkf.png blondines
+images/Spelione/3JwDiiiwITTdB8M.jpg juodulys
+images/Spelione/QI0a6VuSRMaI6pO.jpg trojos
+images/Spelione/PksJyhiHdRmyLMg.jpg rankena
+images/Spelione/wBRxyqq94QLwt0Z.png pyktis
+images/Spelione/xKXVAFQNv506FUv.png mokykla
+images/Spelione/llQUxvh4RVFyNyk.jpg plunksna
+images/Spelione/rbRxNf090rQ3rCa.jpg kabina
+images/Spelione/wPzNOu7l3gyqHxg.jpg REFRAKCIJA
+images/Spelione/10F3029a911011r51343M103i53052554F291r1Mt34899rpd33h2i141706P0000a313520cy92m441ra0052s1M.jpg valdzia
+images/Spelione/7SM402u629370ty6010017M1095h56009and35ma015212P4230pyu204951141M1y58030790112142173naS7.jpg beisbolas
+images/Spelione/Dd99EfvIRRF7szK.jpg valtorna
+images/Spelione/a9EPAqWl1na5dAM.png meskere
+images/Spelione/xVOUwqjGvFlR0Gm.jpg variklis
+images/Spelione/8arz1ap9VCgaWlu.jpg dailide
+images/Spelione/P651tS010ay251p90240M9010n0111M143y5111d113Ma903u523893u9y01109022744430517170m3Snah174.jpg liepa
+images/Spelione/9bgPIkI0ltdYDbw.jpg kisenvagis
+images/Spelione/vYtbIGE9NUSN6Tx.png VALDININKAS
+images/Spelione/g7eiDz8tSLaKCHD.png egle
+images/Spelione/AHI11wMcMdpAreD.jpg gestas
+images/Spelione/92138a104a4340a267198d31rtM8t1h76107a531tS118495M0111c01021114430m808670Mrh10u306Sa248a1rAy4.jpg violetine
+images/Spelione/10dr242ya1P4243MMh4M892280m8400r22i04201t82492110331i10r0ap59310040151F7891908a29chrF43221.jpg sirdis
+images/Spelione/ISv5zzbDhFn1Qqc.png radiatorius
+images/Spelione/oMJSHvkhxZZflku.png fotosinteze
+images/Spelione/CqAJuAbG16vr9IU.png zuvys
+images/Spelione/FXmWKOBnfyUTe53.png arbuzas
+images/Spelione/0h4lMqR7UeAVFpL.jpg tuscias
+images/Spelione/baZ9qFcEhY0XMRp.jpg platus
+images/Spelione/QKcYmgFWRrMcTwy.png RAVIOLIAI
+images/Spelione/3id6uH0zwUl0wNF.png kalbeti
+images/Spelione/8Vcw7V36WEScbTL.png batonas
+images/Spelione/QSYHiqaeN5hHa3X.jpg trisakis
+images/Spelione/hqAngcILiCYDQWc.jpg mastelis
+images/Spelione/LjkSfsYGzt87Vfu.png hamakas
+images/Spelione/VVMjDxixVffhbQW.png narvelis
+images/Spelione/6bTaZOcWhycX17R.jpg lemuras
+images/Spelione/3RoP6A79x6ONfbe.jpg popins
+images/Spelione/Y6i6CWQQx60Bzc8.jpg ritualas
+images/Spelione/yjwTl4f6inQX7FL.jpg zoro
+images/Spelione/1u52S9710apu4M334S40n12yy32a05P098m470511d8h000a808t111319n03y6M4741M340109115402522514.jpg kramtomoji guma
+images/Spelione/XBOpzTDSDoKaOQ8.jpg svirtis
+images/Spelione/218r16a5M76S14h1009Mya3S3c1r324t03597t8pa407001u8a7M203h031529m505731331t418d42a91001P623r6.gif dvyniai
+images/Spelione/SR4WxpX89DSL9Ch.jpg bidonas
+images/Spelione/arnhR6FNNU0Oo62.jpg INJEKCIJA
+images/Spelione/Km0y10AuG6egkc3.jpg musis
+images/Spelione/Q2pN1ZLYSNWnvuA.png ramune
+images/Spelione/ROwxSZ7w7Y00YJx.png PRARIJIMAS
+images/Spelione/MgBUoT9JkxU3lJp.png GERBERA
+images/Spelione/Wsh6K8y3wSZaQAT.png nindze
+images/Spelione/2Scw8wmYXyFTL2Z.png virejas
+images/Spelione/RP1dO9cNyKSf15G.jpg letas
+images/Spelione/Sk82vFggIpyWZny.png takelis
+images/Spelione/830124i3015Mt0p48r275570aa18212F7202c4y92rh11i05d231r1F10988m8232Mh01411124423M0a0r02042P3.jpg geltona
+images/Spelione/MKZHvpVLj6FH8wG.jpg PIESTELe
+images/Spelione/jtSt29ZhLZloJ43.png balsuoti
+images/Spelione/vSqnxTAtBfxCGRw.jpg kilpa
+images/Spelione/pzU72xXBESM91Hf.png SLIDININKAS
+images/Spelione/nXSFeDmsESKLKLT.png kambarys
+images/Spelione/42t00ue41301y2a1e02222P0402959a124MyMTp11601a9901910Ms5y3156h3d9T40304211180192310001u0m.jpg sumaistis
+images/Spelione/0tA1xZqbRk8hASp.jpg genas
+images/Spelione/GK5HjgK4iXaB5Ez.jpg OPOSUMAS
+images/Spelione/XYWntCCptVTRsPg.png ivartis
+images/Spelione/17EJbVoNldyF71Y.jpg varztas
+images/Spelione/mQj74nhCnpkAYEh.jpg takelis
+images/Spelione/d1nhoXdEzGQKJUS.png pazanga
+images/Spelione/19416136079us39709021T5yee900m7Ma6p6390712h103209du649590t7a2M0y14y03900a94172M9221615TP.jpg greitaeigis traukinys
+images/Spelione/sHeNgDWrxzxjm8R.png ATSPINDYS
+images/Spelione/kX3vPA5tuSoDnFj.jpg purvinas
+images/Spelione/8cBCvd7yGTHWjgB.jpg dribsniai
+images/Spelione/LSwjP6C4jPulJKo.jpg kabina
+images/Spelione/CEJkiZGB98fLWRD.png kalinys
+images/Spelione/BiD4bh4K9dEG0ju.png BISERIS
+images/Spelione/TzA0kQ6jfVQC7tP.jpg snapas
+images/Spelione/gah4dO1pzkQDYpo.jpg RIESTAAUSe
+images/Spelione/0alb8xXs1w6dhaG.jpg sudoku
+images/Spelione/lUzeXLQKM3kCFAv.jpg KONDENSATORIUS
+images/Spelione/N4KwF3q5aFnhG4p.jpg GVAJAVA
+images/Spelione/RxaSPQweHaS5bJc.jpg BOLONe
+images/Spelione/L79IEAqLymiy6Jd.jpg REPORTERIS
+images/Spelione/PEGL4l6M0HVg05z.png ploti
+images/Spelione/6IkVwrtIHILHB7a.png IsSIsIEPIMAS
+images/Spelione/8ruhGrZhPUh4tBN.jpg CHEMIKAS
+images/Spelione/6M0894a4t1SS6M50h41u641744r670aa1311d9P438tM750p51a59hrc11672yt03704293rm320010019661003a43.gif vandenis
+images/Spelione/OlmLavwmiUmAgMk.png burtai
+images/Spelione/s8WG6tiCGDfSwlt.png sokas
+images/Spelione/4lF88UBs0ie0ihj.jpg lazanija
+images/Spelione/C3L4QdmuxHGCgwe.jpg karas
+images/Spelione/nrhKDRgURVfPAJV.png karpis
+images/Spelione/n0q20IxdfUBA8Yj.jpg lesinti
+images/Spelione/wP4jvKJ2S7LMUuw.png utele
+images/Spelione/RT5gPSFoeTSpSnz.png TERMOS
+images/Spelione/2MNNuBn4yud3JwU.png snibzdesys
+images/Spelione/pzVaw3KBFYzJt9z.jpg bizonas
+images/Spelione/O2isMcyIeXsBNHk.png kaklas
+images/Spelione/ovf5K7DrH68eyxy.jpg kepure
+images/Spelione/Jetpm6ANTiliqqM.jpg modelis
+images/Spelione/2ye4SGzz1kCxJJz.png jura
+images/Spelione/i7ziMcigHoGklrt.png zuvis
+images/Spelione/123n42S1pM54My14yP09S403a093a131061612090nm5y10M041161951ad560112817uht2440u21090949065.jpg baobabas
+images/Spelione/VEdUIgO1KkEdIzr.png rope
+images/Spelione/7118y08d500M300184505ae12m207n45Ws5d658yp14eP70M02y15W0t0a1451314012e10312h12100a262061M3d4.jpg potvinis
+images/Spelione/hTcKIBw2fMFeEme.png matas
+images/Spelione/XeN74WY0iCvvlCt.jpg bulius
+images/Spelione/w7PKWN3qsKwlk1v.jpg BLADHAUNDAS
+images/Spelione/mjCCxmjw2tdfl9O.jpg CELIULITAS
+images/Spelione/dL2cDiIUUzKu8Kk.jpg tornadas
+images/Spelione/8SY93m5scGxmPwS.png avokadas
+images/Spelione/dkvcXT4sAwNDtWK.png ritinys
+images/Spelione/W1Qp3mfCPNc884q.jpg LAZERIS
+images/Spelione/6KKxkEn2FcpqpC7.jpg KARDADANTIS
+images/Spelione/s30s0aD3GvSK5ZE.jpg vualis
+images/Spelione/m1555ayS13S140un54649ah309Pa4322010u40p041220d17M7n38051M401y15951114120947420t07yM0116.jpg Lydmetalis
+images/Spelione/NNP3iImNQcI4fRK.png lapas
+images/Spelione/IG5NYs6UekqoczM.jpg CEZARIS
+images/Spelione/YsbDyv2frB7hHEb.jpg grafitas
+images/Spelione/eL8PV9JzBvHXKIG.jpg lygus
+images/Spelione/lD13nxThEC1peEl.png SKRIEJIKAS
+images/Spelione/NPo1zEY341ucad9.png prizas
+images/Spelione/Q97oykcMD8sBO41.jpg lasas
+images/Spelione/QUxvXzw0hN9IbnU.png VANILe
+images/Spelione/r03c19P7a01M4271384653531350tha06MtMr5p4y4014019919r7a1S1738411h66t3260d9u044071a0a451m0S50.gif svarstykles
+images/Spelione/WzyVhvrb12OP0a2.jpg dangtis
+images/Spelione/bhmVQ7BfXmLvRV3.jpg ilanka
+images/Spelione/UgRywO4ahzhStqH.jpg PORTJe
+images/Spelione/AbkiuCQfpFPqAwV.jpg ILIUZIJA
+images/Spelione/B7IitTCLJ5b9SpR.jpg laivas
+images/Spelione/zYOVB1kSDv9SVZS.jpg baobabas
+images/Spelione/csXgiZqyrpYUxaL.png kailis
+images/Spelione/LdJEfH2B8mRVDCr.png MARLINAS
+images/Spelione/p422S91S529a11y277107601a404M100019nP109mtyd55420351951921y83nu17u7a3054MMh762300300554.jpg sulinys
+images/Spelione/8Iv99Dn9yUnm29Q.jpg laikiklis
+images/Spelione/FR9ZSzrkIUiA4IT.jpg apsiaustas
+images/Spelione/2gm4S1HTZPB6adF.png dumai
+images/Spelione/097034P511049M43M711923h0S179m4y7aMt6a0519330311880t0p1t0301710c06daur7ra3h71580S2a4r276350.jpg gintaras
+images/Spelione/SWpaVsU8PWxOajB.png saugykla
+images/Spelione/rB2HENvUX7sTZ1N.png BOTAGAS
+images/Spelione/69u9zU0pmlGodTl.png silkas
+images/Spelione/CmlUt1gUVKKv9zt.jpg MOCARELA
+images/Spelione/DjdacnJ2AQ9WYxT.jpg laiskas
+images/Spelione/h98m62d42eM074512TM19s0M941213PaT2ya00219e043r13931h2603c424p10011234au00t90060r13212u121.jpg bmw
+images/Spelione/E3NmC3M9Pk8wO0L.png SVARMUO
+images/Spelione/aw0FDVtPijjTK9y.jpg liezuvis
+images/Spelione/AP99EKNrrFZPhr6.png lama
+images/Spelione/jri7XPpElVxWHYj.png kriause
+images/Spelione/004i12My43000419aF28M0174P3FM27r0r22r811202483p1c328082183ata1d245314rm41952h7010ih2031143.jpg galaktika
+images/Spelione/WOTm215dwBZAUX2.jpg krantas
+images/Spelione/bU0jymi4kPZ7qLB.jpg denis
+images/Spelione/pj6IoS1susGh84Z.jpg erdvelaivis
+images/Spelione/3SqWgDYgf8Lp6BY.jpg KuRYBA
+images/Spelione/Kk0hyxCvLS9MRbN.png snaige
+images/Spelione/P3nAe8samcstXLt.jpg APSKRITAS
+images/Spelione/Lqa2xUKwFGwYOCX.jpg JUOSTELe
+images/Spelione/FNtAvee3Ud5GUI7.jpg kelione
+images/Spelione/Fr65gJei1hPjP9E.jpg GRIEzINeLIS
+images/Spelione/LKeZOeNRjkyPJZk.jpg nervas
+images/Spelione/tcnPZvPFLApJ6nG.png kvadratinis
+images/Spelione/BFvQDxQZ7zcZXeO.jpg HEROJUS
+images/Spelione/1nRUehAMuqfwvvM.jpg lape
+images/Spelione/FYZibsrOBIRUNzK.png masazas
+images/Spelione/jhfjHi1RMz6STKx.jpg bluznis
+images/Spelione/aBYk95WW67GTCXn.png avilys
+images/Spelione/hICyUsusFwAwEso.jpg elgeta
+images/Spelione/pVYEFVFi0uAyH6x.jpg pukuotas
+images/Spelione/kMZm1oYmc69XEnS.jpg AKORDAS
+images/Spelione/JDYVww4MECwUAXq.png balerina
+images/Spelione/m0a109307d1a1yy31110P090545041024MM5012S290u5040n6h5193y0S113522M32771430pt1119n8au2325.jpg azija
+images/Spelione/9vlLZpLR4IWKR0y.jpg LELIJA
+images/Spelione/S137d4uMr71073047a1046rr05p1tS730h318am10M4a084632a01h17a7M00240650910c07t57941P39y501t1893.jpg laikrodis
+images/Spelione/JJsleBrdmwmmzNs.png chameleonas
+images/Spelione/v7zrjcdHMEN1Ajn.jpg PILNAS
+images/Spelione/7AKojmPqeYdPry3.png sliuzas
+images/Spelione/O2TGEEHcgXkVEKM.jpg DA VINcIS
+images/Spelione/khIW9JJTGqidaSJ.png BIOMETRIJA
+images/Spelione/N45BjkdK6Szuaf1.png TAPYRAS
+images/Spelione/toAKd6ZuorvqKAu.png SERVERIS
+images/Spelione/yZVZYD77eapljin.jpg ismalda
+images/Spelione/Ic6PCKQm1BBWA8a.png ameba
+images/Spelione/aT5TYQhHASn7kaL.jpg CHROMOSOMA
+images/Spelione/W9hbb1KWrgHBqho.jpg GIROSKOPAS
+images/Spelione/DVhmN1iBF1lFmI3.jpg piranija
+images/Spelione/h8zPkPh0e0Lyi6D.jpg eksperimentas
+images/Spelione/n2bYSXGc1AASoEH.png PANTOMIMA
+images/Spelione/EOTT8OSr99wNEV4.jpg BIOKURAS
+images/Spelione/o6fBoYWqWnFuEY6.png BAKTERIJA
+images/Spelione/JrLr6uNPf5ozNJc.png nuosale
+images/Spelione/Ljcz5Z9l4a8dm1Y.png rozine
+images/Spelione/vyKP4ASDJ3cvMa1.png erke
+images/Spelione/9QABUTNYtXefDO3.png pelesis
+images/Spelione/Rnit5T0giOdiG6N.png vienas
+images/Spelione/jsBNPG9xOFQO9dC.jpg plakimas
+images/Spelione/KsAEwyj7FNwe0j6.jpg vikingas
+images/Spelione/1041iF74F9p0103y3922029dMr50mM308202651851ra10208a23041913hi144950c45r998r7a4ht1698M3141P.jpg facebook
+images/Spelione/YOjvedhQHVMcyxa.jpg PLATANAS
+images/Spelione/4993hM95ap501ae63913290s109y19aP2u2536115420uM139T420060M3m191e00903997t30T20601yd562y55.jpg indauja
+images/Spelione/tPIOeoysCyI5xeg.jpg krautuvas
+images/Spelione/UMECfzR3WQ9K5mm.png JUNGIKLIS
+images/Spelione/3EZ7dpDD1BmkKVA.png velnias
+images/Spelione/dyjhdzCVOxgBgFv.jpg PLASTIKAS
+images/Spelione/d7wu9HOhQkNZB0q.png juru ezys
+images/Spelione/0wwGx4PBBJE0GnJ.jpg smakras
+images/Spelione/hX9JFTMwc7APQl7.jpg KANDELIABRAS
+images/Spelione/QnY8bpMHGENiwsx.jpg KOMPOZITORIUS
+images/Spelione/IRy0Tb9YGPYCHB0.png ugnis
+images/Spelione/xLZ2UFbA96NoNI1.png saulys
+images/Spelione/kNbPMaJRoOa5lyY.png sakute
+images/Spelione/aMOW90SgbCcGl8O.png lankstus
+images/Spelione/EKxLKgBw4yS4FDN.png lukstas
+images/Spelione/LsxVMY6JiOAqiO4.jpg KONDITERe
+images/Spelione/uB5MYmcLhnkLFOr.jpg SILOSINe
+images/Spelione/aS12790y350081544952116u8030205c017aS80r0r17tr3a16819tM0M5743167h1129MP804ta4d33ha59p2m0313.jpg sankryza
+images/Spelione/y0a1m540451310h29P12S4n539300t0y900100230497M07u4000a2u12S17747d55y1509a2M1128910Mp23n3.jpg susikaupimas
+images/Spelione/O9anGD8Z8ccazoa.jpg GODUMAS
+images/Spelione/rJQayZ78biuRD7u.jpg zalia
+images/Spelione/UET5KkJ1F1Fz0F1.jpg liutas
+images/Spelione/71344nM2n0aSu05d2801S50a045M601M40222541m39711034412p10u390140t5211y7219414291yh0Py01a0.jpg jungtine karalyste
+images/Spelione/0xniuqHGtyrbknZ.png karieta
+images/Spelione/ngqLC6kE11plYG2.jpg DYGLYS
+images/Spelione/TneJKF9kwSgBCCf.jpg spyga
+images/Spelione/gr7vjal4KKjL8pA.png lopsine
+images/Spelione/Mp4z246VO75KodI.png teisingumas
+images/Spelione/zzyzE85hIHVRD3N.png guru
+images/Spelione/AOmreqohkHbtpkO.png uztersimas
+images/Spelione/cLYfZ45McaEVdZ4.jpg vapsva
+images/Spelione/gKrR0aCO4XQQPnn.jpg veterinaras
+images/Spelione/crnMwW1d6pXhxEN.jpg plustis
+images/Spelione/A95zF5CP6EkNyG9.png sistema
+images/Spelione/N2684wxeN6aP777.jpg mormonas
+images/Spelione/kBf8ohhYDQStHLa.jpg SPROGDIKLIS
+images/Spelione/HAg2K4R0M16HQAk.jpg pusis
+images/Spelione/dX9Nr2zMZKiIGYN.jpg VEDeJAS
+images/Spelione/2ye4Szzz1kCxJJz.png zvejys
+images/Spelione/9y0180911770214y9Pa77y5315431a41479300M1016S0520d2SMa80h50m43u0un0261157tn051233304M06p.jpg mainai
+images/Spelione/0QT8WmaWYwb9aa2.jpg banginis
+images/Spelione/upArSxBJBgWxxlV.jpg VULKANAS
+images/Spelione/efrx8abOhWnHSvG.jpg HOMEOPATIJA
+images/Spelione/ptnawHmuA5njnSk.png rysulelis
+images/Spelione/XOVtnjKQ120K82l.png kanarele
+images/Spelione/h03M4t42um40855y5y92021015643y0p5a701d26a90M94117877031931700317a5nP31253S48S01M1u00n10.jpg kempingas
+images/Spelione/5UeZGEQ7TZyHwKn.png zaisti
+images/Spelione/dA7bPEGahCJhihq.png GARSENYBe
+images/Spelione/bLCjhFPM12Y0ccd.png deze
+images/Spelione/231231F1091p035hMyt4941188337m0r3i89aP111MMh344533d02F5r910220c800820212142a3440r10ia09r88.jpg raudona
+images/Spelione/ri5lIz3CNuRsluJ.png miegoti
+images/Spelione/PhV1IuNLXag5pc3.jpg strategija
+images/Spelione/mTp9t8dpw0MlFCo.jpg BALTASIS GARNYS
+images/Spelione/rTwjLAlbkWHjnew.jpg maisas
+images/Spelione/L2xLK6Bfy1EcHdm.jpg ziedas
+images/Spelione/616dhPar5603421t77ta910204016M37133au04401S165a1hm91ac529r800t17MM41082p92rS654y07303130874.gif lenkti draudziama
+images/Spelione/8D90KJpx2hndA4W.jpg atomas
+images/Spelione/5wjAC0Q825XZVps.jpg azuolas
+images/Spelione/CRNVo5W8AtcTvqI.jpg apkasas
+images/Spelione/iN3S0KTFfExn1L2.jpg kristalai
+images/Spelione/lPn36dPA7wdLk5r.jpg sukti
+images/Spelione/YhoW3yca1gaTSFW.png SALDUMYNAI
+images/Spelione/znisq8DiE2ekg35.jpg sekme
+images/Spelione/QNCoK4n8voyrNJ6.jpg seteris
+images/Spelione/BqmbWCsxhynGLHP.png raktas
+images/Spelione/HzjmryLuF04bShz.jpg vija
+images/Spelione/bIViH7lqJ5QBlWz.png plytele
+images/Spelione/SB6QwG3rxfc7Fov.jpg lizdas
+images/Spelione/1zKcJt4jaoOpOvu.jpg manipuliuoti
+images/Spelione/pAXN7EPEkRjU4fj.jpg sezonai
+images/Spelione/479420S9maP3468aMr80Su11170249519537M94d8a42047015300t180h381t1t76111013ap03a910hr9y3c658rM.gif oziaragis
+images/Spelione/E1npv2XGW4dXV5L.png naujieji
+images/Spelione/031d11h22922111941M510a32atcM0iMr08382r8r541Ph02y107280F44405rp8m848a0F4541140i38013592022.jpg vaivorykste
+images/Spelione/vBNyl0eCtHrRUuy.jpg izoliacija
+images/Spelione/q4QoLHKwsVRD9XK.jpg suolis
+images/Spelione/3GiQNh5tVVI3Xzt.png plysys
+images/Spelione/u6sGXnohufdgojQ.png ikandimas
+images/Spelione/227n99yMPm29Mat1000ph2209112S217100133a2ndu8113y0400144154012My90600415302317005S69ua25.jpg balalaika
+images/Spelione/4DUcVjcPtBUt2OC.png plazma
+images/Spelione/1QT8WmwWYwb9om2.jpg strutis
+images/Spelione/vqdIHv2ENgEzyhn.png smogas
+images/Spelione/MN2XxOd0wLcfDDZ.jpg VOMBATAS
+images/Spelione/GOEr0CiBfe1ZJoD.jpg ATLEISTAS
+images/Spelione/Rktguk6SS0nMuja.png saltis
+images/Spelione/E1R9Ac5piqJohyn.jpg SULENKIMAS
+images/Spelione/l7TMJoM2DnWaZkI.jpg vamzdynas
+images/Spelione/z0q1W5LL1CgPETI.png SEkTUVAS
+images/Spelione/3asZ8inDPLMuyaU.png SKAMBUTIS
+images/Spelione/NegaGhWXFUVsQh1.jpg cercilis
+images/Spelione/gbW9xCtAeSZGjma.png uostyti
+images/Spelione/FQ16KalUBaqU0tr.jpg gamykla
+images/Spelione/mikOAv6zwEHDYlX.jpg beze
+images/Spelione/JN1KByjoN8HTw0S.png zoleles
+images/Spelione/0QT8WmaWYwb9oa2.jpg BLAKSTIENOS
+images/Spelione/FZn91ZTaImPlZj2.jpg sviesos diodas
+images/Spelione/aT10a401212a002213m0du0139509t80M00y58920e02M0p9P2940110y3ye700494120930u8M5154s1h05606T.jpg priespauda
+images/Spelione/HepoqZJMD0aOhFI.png baidare
+images/Spelione/I5OEtV8nxEt2rvs.png kapas
+images/Spelione/sSUTlya2vignBPn.jpg KONTAKTAS
+images/Spelione/SjGC78Jqxb2z0RR.jpg smalsi
+images/Spelione/rbHuCJJlMui4ZPT.jpg sVYTUOKLe
+images/Spelione/Fy4O7PVRidiAgU0.jpg blogis
+images/Spelione/qCfI0sDWVDUdaS6.jpg gaidukas
+images/Spelione/EAZqni61YliL84t.jpg tanklaivis
+images/Spelione/XrGvKeCcwQIvLfT.jpg PROTAS
+images/Spelione/Cl1oHszWsHOCv79.png zvakide
+images/Spelione/35dMRnVqyayE9Sd.jpg sausra
+images/Spelione/NAq4vsClM0EmCVU.jpg cmyk
+images/Spelione/y2SwP9QByWntN8B.jpg lesti
+images/Spelione/LfrkB74f3b5JrQb.png VIENUOLIS
+images/Spelione/UAi0AWDFMYktLBg.jpg ALAVIJAS
+images/Spelione/0UmKkrglbfeFFIb.jpg tarnas
+images/Spelione/vEz2lxwd8K7B1Ev.jpg RANKsLUOSTIS
+images/Spelione/rP8fvV9raROfQ5J.png KRUMPLIARATIS
+images/Spelione/ZKqYXja9WsB03z3.png paleidimas
+images/Spelione/ndJ3Tfjxdav9oSj.jpg ziezirbos
+images/Spelione/ff2EzcdXwLm7Cty.jpg kompostas
+images/Spelione/00005041irr3p28598430M18178250h4412F12959020a5624P2a6M1Mt3112ir041184r3y410324d1c00a2mh86F.jpg snaiges
+images/Spelione/OUUXxMzrH5AKT5w.jpg tyre
+images/Spelione/17GNMKThq3Dmhhb.jpg GULIVERIS
+images/Spelione/71S0713r6dt67016thah3u9S911a87001100p1601905748m1r2417y4935037M6t034Ma355ac0110P3a2739314rM.jpg stovejimo aikstele
+images/Spelione/20F1210024843r0211124971r1y02dm8p0h53i10r0a01423M3h8t3208832ri01440c01098485FM40a4Ma332P01.jpg roze
+images/Spelione/wtyCI0fCBDO9cB7.jpg TELEGRAFAS
+images/Spelione/nTnQEYbithbf7TA.jpg gimnaste
+images/Spelione/2NQ97wau9rcwdgH.png SEGIKLIS
+images/Spelione/fc2COlCg6EvhcwL.jpg pergale
+images/Spelione/NiLf3tR9NHNY6iI.png filmas
+images/Spelione/UDASI1Vu4qb5SiY.png zona
+images/Spelione/qP9xJgt1wnf9Ds4.png vejas
+images/Spelione/8c73ar1018a41322M512423pd241r2401221148r010P2019rhm2F03M22820304149280F7i80808M1t5h0ia08y1.png youtube
+images/Spelione/q26Jh7rSJ9Z9jjB.jpg FORMULe
+images/Spelione/SX08o76jTOND4dq.jpg karjera
+images/Spelione/t39r2165a4107149750td318Mh00424P102u3rS3891813276740SM12a06a3341t15ayc395am3p30107hMr800136.jpg deimantas
+images/Spelione/3irqDSysm0yE2ww.jpg sliauzti
+images/Spelione/fmRZqfwsWQS4JKu.png atmintis
+images/Spelione/l9I3iAFP0pax2fl.png kareivis
+images/Spelione/rpKrhV4PKNmMMZw.jpg sandoris
+images/Spelione/50S5MQs43LVuuu8.jpg kombainas
+images/Spelione/XMKu3EwbvtY6MVP.jpg SLANKMATIS
+images/Spelione/CoBuaFpLDCKhrol.jpg PARTNERIAI
+images/Spelione/F6qa4tqevzcXSfn.png paieska
+images/Spelione/9Ez3O9cJqYJ5KIc.jpg asteroidas
+images/Spelione/SkVZtaWUuAhetWv.png ORCHIDeJA
+images/Spelione/7sMxXBFiN29OVm9.png zenklas
+images/Spelione/4197I3VY9TzMMMR.jpg UzKEIKIMAS
+images/Spelione/ge6MSaLzazOd4c2.jpg ziemos miegas
+images/Spelione/Q0oyiihXyYMjdO7.png greitas
+images/Spelione/oYuW6oAZFvNAGFz.jpg ekstraktas
+images/Spelione/Y5b0zP3c9NsCkXq.jpg anglys
+images/Spelione/2gm4S1HTZPB6edF.png kauptukas
+images/Spelione/Xv0l6Vs9GApwP3U.jpg JONVABALIS
+images/Spelione/5sRScuQAi4LxSs0.jpg laikmena
+images/Spelione/K6FTepH42YKtATy.jpg luzis
+images/Spelione/OCT1PvTmLsDUyCo.png APKABA
+images/Spelione/82cCo2ZgUMnJOoI.jpg kvieciai
+images/Spelione/ZRbn6RAX8DcD7bH.jpg ernis
+images/Spelione/Rz9uLeYFVafcVkp.jpg veplys
+images/Spelione/YGy69WzwLg3vW7Y.png DARVINAS
+images/Spelione/VGde0gDZxbGN2fD.png zadintuvas
+images/Spelione/4CjQEDa63YjjvVZ.jpg KLARNETAS
+images/Spelione/3OjPLFHSAZWC257.jpg laikas
+images/Spelione/juMVkZKOgBKXw8l.png vintazas
+images/Spelione/FHnTMRXipkLUDot.png BARsKUOLe
+images/Spelione/bo56VRoVclpYeL0.png kranas
+images/Spelione/aXTTGmqhnR312mN.png spyris
+images/Spelione/tOzHzbpQpSKU4yy.jpg tempti
+images/Spelione/Ud94WRX5QtWjGSX.jpg RUDUO
+images/Spelione/qYAnk5p2aim8hDL.jpg lenktynes
+images/Spelione/W2HQ7Jgn4jrKVoO.jpg RETRIVERIS
+images/Spelione/rWIklOipYMvfWWI.png LAKsTELIAI
+images/Spelione/GdhUxaPWLuK4Sqr.png akis
+images/Spelione/FDEsMUDrxXxXuPb.jpg PUANTILIZMAS
+images/Spelione/ctOYkThEwhSGsNV.jpg gresme
+images/Spelione/6GuSkO8abOIKEVQ.jpg trukumas
+images/Spelione/0030430a8550759n0p3050M50m913d110yM10022Py1044932u2y10S8510a5040130M9u00a912S7n1h8110t4.jpg maskvos kremlius
+images/Spelione/cLiIkukWgiIlSN6.png VeJARODIS
+images/Spelione/KZNAh3GJLHz8dDM.jpg SAUGIKLIS
+images/Spelione/b4O6fCHfhU0hTAu.png lengvas
+images/Spelione/Qawc74JjLyB2X0n.png trys
+images/Spelione/YJETYV8ONw5J5dQ.png kirpti
+images/Spelione/ZGVlb8Gk4viyzVM.jpg HISTOGRAMA
+images/Spelione/e0AOnzJmHRmDuMe.png zebras
+images/Spelione/YCIFXFmntPak9Fa.jpg bokstas
+images/Spelione/xdbnlIxmlB180BA.png posukis
+images/Spelione/oKBbo4QyO9O2So7.jpg gynyba
+images/Spelione/z8S4V27oDfGg7zm.png svoris
+images/Spelione/QaAdX25YxV61jQL.jpg ritinys
+images/Spelione/3AFSArvXHdKEZgi.png bucinys
+images/Spelione/p0m606eMr026913y100r19a1420t296Pu349136TT3381M2100010012944u400haMc245a99s020211d5h3936e0.jpg euras
+images/Spelione/25172330071ny1344900701u28ay0493h42031m55M1MM5S69u00601P21St2111465d10a3y502251n303p9a0.jpg brailio rastas
+images/Spelione/orYJJhbFDlqTWcW.jpg malunas
+images/Spelione/704qV7QpdMp2B6H.png lele
+images/Spelione/pzoYfAqspmXecZt.jpg duztantis
+images/Spelione/bhlSpd6lCIcvXP9.jpg AROMATERAPIJA
+images/Spelione/YcuqAaB547LaPnY.jpg MEGAFONAS
+images/Spelione/3UDCRH4M1S2gQxf.png MOPSAS
+images/Spelione/HcDPuYVzLmoqvr0.jpg slenis
+images/Spelione/DdVNO2dEfFiTRoV.png robotas
+images/Spelione/czzNDelSsf18oq8.png riteris
+images/Spelione/Vc4zx8PgF1QxEVt.jpg pelenine
+images/Spelione/lNV2iODAc5Jea0K.png karuna
+images/Spelione/DZk8OCpmIUqilkO.jpg katilas
+images/Spelione/03021116t90351979184u4956P0480Mdy171h1pc050080823601r036735a7mM2a01t42ar00313h0t0341r7SaSaM.jpg auksas
+images/Spelione/FSqYo0GX3VhFTZ6.jpg iVERTINIMAS
+images/Spelione/k009lewv9raJBUY.png VARPAS
+images/Spelione/5q4iWWPa4Wrp7w2.jpg kelis
+images/Spelione/WmW5OIhqLArwZ6I.png SFINKSAS
+images/Spelione/evxvWq66ztc52Mi.jpg ritmas
+images/Spelione/6FOQI5Nb3baK9fF.jpg udas
+images/Spelione/92851nh9000M593y6M0ta42d48140003080340174427p61y14Sa6M6u524Pm0377611100400y409a110n2S8u.gif istatymas
+images/Spelione/JfCae8UhcUQXkF9.jpg CHRIZANTEMA
+images/Spelione/1GR0AgJGBmFXyQJ.jpg RAsALO KASETe
+images/Spelione/e03rgiskVoxcgHr.png gyvate
+images/Spelione/g3Bu8GrK43vdhrS.png kobra
+images/Spelione/gDYqexBIGfOCcwj.png SEKRETORe
+images/Spelione/mtNFkctE1IEBOGN.png tyla
+images/Spelione/HM1qUYRK9acex1F.jpg KAUTYNes
+images/Spelione/TN2gJK6NtUnXd7p.png stabdys
+images/Spelione/aDNG6ngDbd5pUVW.jpg iBRezIMAS
+images/Spelione/ZQIbOrel5OPFUY3.jpg zurnalas
+images/Spelione/DxlzTid9IxIXb7H.jpg lizdas
+images/Spelione/2021184p50T0060e2M26y2a0M31mh89430y9aM9P4091695t6u1101ed19a122900T0u0004403064s2610y5200.jpg partizanai
+images/Spelione/riHMEULxOBT1X3v.png sliekas
+images/Spelione/K0BI23xVtrMln7l.png prezidentas
+images/Spelione/PS5Ttu1wIYJKcQI.jpg saliamis
+images/Spelione/GsLVijljbTLQlKS.jpg tvirtove
+images/Spelione/onaMYiEXjPtXhPV.png gerimas
+images/Spelione/bFpgLxoDYuOgbfv.jpg zigzagas
+images/Spelione/XjyHqOky9RrB1NO.jpg kortas
+images/Spelione/v9g925McgeDc1yI.png maisas
+images/Spelione/y1842r10M126M8209p00Pr28315h01tm4201145321F214004280i12d11430c2r1a222ir46a9h303a38788309MF.jpg pienes
+images/Spelione/ArjAjNTZgOhBE8D.png VILKOGAUDIS
+images/Spelione/RZBkYXOqszz2ATd.png KARJERAS
+images/Spelione/pP2074S33tdyM690r07951116431c09M329993raaa4126090r01174305336107h05764u80t25m1801M49tah11Sa.gif Stoveti draudziama
+images/Spelione/N5hOR6C9rPopmes.png pilis
+images/Spelione/QVluTpphQuMeUGF.jpg PUOLIMAS
+images/Spelione/762WP1ziVVnua4X.png vystyklas
+images/Spelione/ibaTxnrcjrK9TUI.jpg panika
+images/Spelione/s3eXhKhgP5NffbK.png seima
+images/Spelione/nkIe3TMWxeWuqY4.png DIRIGENTAS
+images/Spelione/Jqhmj3M8tSKfrrL.jpg kirtiklis
+images/Spelione/gIb8HVxup37lrjR.jpg gausa
+images/Spelione/tShUXSq1RgTCXML.png raktas
+images/Spelione/jgg1B2Yh1oLdvqG.jpg NIUFAUNDLENDAS
+images/Spelione/TrD9rHm46dTZUWL.png rysys
+images/Spelione/TRsfbkUtd3n3HS7.jpg BARza
+images/Spelione/gTQQD7Syp8mencR.jpg chaki
+images/Spelione/0QT8WmaWYwb9oa1.jpg sviestas
+images/Spelione/YWiZ4dv2hKCeJvU.png auksas
+images/Spelione/HZqyB5iGVlhZYK4.png genys
+images/Spelione/9QYqt2Na0Phx2FK.jpg kolona
+images/Spelione/2920ar32444u63d3440109s0061041311014190c4T20p12e6yMh94314123292u0ra9hm82620M0t2ePM42a10T3.jpg sviesa
+images/Spelione/qSPpd4knVp4VTks.jpg obuolys
+images/Spelione/8j0Vo9dcg7GcQse.png EPILIATORIUS
+images/Spelione/w5tyzUnaf45I7LO.jpg TYRINeTOJAS
+images/Spelione/X1qc99YI9eWR5Qx.png SazINe
+images/Spelione/31amyWRZQjb1lk9.png piramide
+images/Spelione/9UnbF0Z4DjzE1Hc.jpg spintele
+images/Spelione/v3axF742z7rIbFE.png DIZAINERIS
+images/Spelione/El4MlHJKLuTjVXt.png KAUSTIKA
+images/Spelione/hc2599y292243001414h0i4p100Mt2r2a1i2113F0120418r432M85087m0338P5r4F031020121ar513da02M3028.jpg zvaigzde
+images/Spelione/yKJhd1WF9dMfWTE.png seselis
+images/Spelione/KFRtZCJYFaZ53Gf.png gelbeti
+images/Spelione/OREh5zzPoxtKkZU.png makiazas
+images/Spelione/e9kxqvc63kOyg8y.jpg aura
+images/Spelione/pXEUVPUFk0Nkj8t.png vista
+images/Spelione/A6ZdzIDKHGEXbaL.jpg dieta
+images/Spelione/19a237212m7041008Mh14124P0ci2M233h03M32427i9y10rr81313r0550181d404031at2p0128F1F7a828475r0.png italija
+images/Spelione/GEJ4EQPEPrIe7ZN.png vilkas
+images/Spelione/O1rQSWn4NBXsmy2.png ATSKIRTI
+images/Spelione/kmCcAyaSRdKILIV.jpg BASETAS
+images/Spelione/ID18oRXEuFDOzcs.jpg sTORMAS
+images/Spelione/FsXGGVRhIU1ib1U.png RAGUOLIS
+images/Spelione/DQhZUNmLuR0dOf3.jpg ara
+images/Spelione/JWixLHLbVsY4TWo.png boulingas
+images/Spelione/41W1077M0a331t2e4810y2aaey564255WpeMPn21624M481716y2030h5364d72d01720504md48004717608011s10.jpg narkotikai
+images/Spelione/jwbEhbcWKYZtTBs.jpg uzkardas
+images/Spelione/1359S3mM14123c6729119h2hy2a236a1r0419u0t713630490a4501Mr07S13r5110dt900P51pMa494414a3t100311.jpg audi
+images/Spelione/vt5c8wP0G5WN3Qx.png tirpti
+images/Spelione/FOxiilcChyhk6PK.png mamutas
+images/Spelione/2UZm1X5sXY0uNr5.png puodelis
+images/Spelione/eY1qxbsUf7QPvKL.jpg STRAUBLIUKAS
+images/Spelione/RI5KRuIdsQQwwBz.png pelenai
+images/Spelione/SLK38ip7O7x0CWi.png saulegraza
+images/Spelione/DMLqtTF7eA8rd94.jpg RAUKsle
+images/Spelione/10a0135c0t7m70M89a16r9t9018t1M19715a01h7r3773625y4ud9038954r4p10S093028ah345610184Pa382SM31.gif kontrole
+images/Spelione/NJ4CvgimAjkz4tc.jpg udra
+images/Spelione/rPfH7iUwbOeUe8A.png DEVYNI
+images/Spelione/V0fydSMblbVg7GG.png pusti
+images/Spelione/RSTmOezuI3nCCZH.jpg DIPLOMATAS
+images/Spelione/gUxivbEImVFeOLt.jpg AKUPUNKTuRA
+images/Spelione/5aS4rmLU2kfX9Re.jpg SLAUGe
+images/Spelione/QkBTCRJ2W5OTPsl.jpg rodeo
+images/Spelione/pAoXsKTMmc7bmRO.jpg MAsINeLe
+images/Spelione/OWihSiZoHGXsHD1.png mirktelejimas
+images/Spelione/lVLryclDwetIUgA.png STReLYTe
+images/Spelione/4Pf8E2jbp1sU73u.png karstas
+images/Spelione/3FSzmZc7ARiisOd.png koala
+images/Spelione/RjNqnzqPX1W8Xls.png spyna
+images/Spelione/pdODZKiEeTPtir4.jpg ATLANTAS
+images/Spelione/JgwVFbqBqLlHhrQ.png kopa
+images/Spelione/d05he2M30093091921Py5940142p2a8131uc6066401a36222612r122040300T0M1te31T6m90h314suMr0921a1.jpg strutis
+images/Spelione/i0zS8VnXRfusNyh.jpg BLYKSTe
+images/Spelione/UWN66FZmTkfmOnd.jpg dvylika
+images/Spelione/o9zl4wiAzdMG7Z4.png pauze
+images/Spelione/s4mg5aRhR8dFxOq.jpg vaskas
+images/Spelione/6119180m9n6302281M014y218d754M1ata4h71S113048S2P603340M4320ay1400942p88u0500511192u0ny4.png skumbre
+images/Spelione/29300es00129mte9644ry31512419036u43110154M3aM22119c21M300a0up106d126101Th280r1196P3ahT060.jpg sesiasdesimt
+images/Spelione/MkMOGT9flLnl6OP.png DIRzas
+images/Spelione/2mm4S1HTZPB6adF.png mafija
+images/Spelione/Ajy5OvivuJ2Zm6s.jpg GNOMAS
+images/Spelione/2Md0SnK8VaIsSr7.png cIHUAHUA
+images/Spelione/msHXjOtC8p1XOjF.jpg pramusimas
+images/Spelione/uKBbs8OneuyAkZS.png KAUBOJUS
+images/Spelione/zILy7ffzh7Hqawv.png PRINCESe
+images/Spelione/Hyew2EdXFjHqeTm.jpg medicina
+images/Spelione/aeSshn2zDtGk0I8.png panciai
+images/Spelione/suMgzmKpElbJxvC.png jautis
+images/Spelione/luW5ikDCXa4isan.jpg RITINYS
+images/Spelione/5gRSz1fKcVpuDb8.png planas
+images/Spelione/61M031319314021460009T10a13320043aha0h9h12M523s1uPu410y622tT40r45c69h1mp3r39r64260d3210204M.jpg koloneles
+images/Spelione/g6Y5Msv3nhmhjBe.png dziazas
+images/Spelione/2hG02pVA9eGJuek.jpg kauke
+images/Spelione/l0YQbw2VCWfuP0x.jpg TRIUKsMAS
+images/Spelione/nwO3Vne9hkLFHL7.png VISUOMENe
+images/Spelione/1010016116S0u209y6395M5p1m17754M1950009dtn9S030324na51415y075a25y82h1235943M3409305u1Pa.jpeg sinsilas
+images/Spelione/HMAUuD5egeWY38V.png rojus
+images/Spelione/POfptb17szCSktR.jpg FOKSTERJERAS
+images/Spelione/nRAm7bcqt7vsJxI.jpg tiksti
+images/Spelione/Uk7R9npksnriAQc.png mastymas
+images/Spelione/wI4y6ym1cAIl6u1.png erelis
+images/Spelione/9HVrUR9D5uzAEMQ.jpg denimas
+images/Spelione/9Pa503a5525r9S0mM07976rh24M41a1ath1d6r16t0M908787593431y3003191u4a22t1c610401329761S31p0004.jpg xgm
+images/Spelione/UbsThhwielJImWT.png termostatas
+images/Spelione/2we4SGzz1kCxXJz.png avarija
+images/Spelione/049hMuM0209153tT0s101042e152ym6848M03a830y039224y01e209apu1085a210004P09d169141032018T90.jpg panciai
+images/Spelione/Dipn8e49EnfidfM.jpg TAsKAS
+images/Spelione/tOJ6bk4U6Dtc6Mf.png ANATOMIJA
+images/Spelione/Ccm3ITMEqkScsR4.png rudys
+images/Spelione/171e1261724da24y25apne4028101010322308M3142d7Mm48550W0127Py72se0t7185h18W12y431a0d00066013M.jpg kremas
+images/Spelione/pUjaT9p5C7EGz79.png vienaragis
+images/Spelione/UPwMIAVbvwXJPKS.png klounas
+images/Spelione/9J0jGQtmNxSEPGq.jpg DIDELIS
+images/Spelione/MuhjyaWCo8rmLEe.jpg VIKRUS
+images/Spelione/C3haBMyW1itpOKJ.jpg griovys
+images/Spelione/8PccsGloLwhEHej.png jogurtas
+images/Spelione/bYXJihauVP9a4ZM.jpg PROJEKTORIUS
+images/Spelione/791581rp5u32090591161919MrP03a344at134S90741ta1M120r104h7S09myh7a30d3019949061t30ac10339M04.png nokia
+images/Spelione/n91119200032830205m40uhMa1t54904y102y12MyS713a4076P553410u04SM14a1416010dn094750334p607.png pastatas
+images/Spelione/Y4ymsik0EQw84vd.jpg kalba
+images/Spelione/010ympM3P90t191204300097M21ya600105378y1749d4101449nS1h32025124u592a2n1109S4a3170335uM0.jpg zibaline lempa
+images/Spelione/xL8W3vpfoBLJjGw.jpg SUMUsTINUKAI
+images/Spelione/Vjhgq1gBbXlgnM8.png AsMENYS
+images/Spelione/vgqbiXQqxtccbTy.jpg akita
+images/Spelione/cwju50oTDexLlCF.jpg virusas
+images/Spelione/lKbZzPuL31NkOb4.png skaiciuotuvas
+images/Spelione/ed5pIKWM5fPdVc3.jpg sERIFAS
+images/Spelione/AcFk5WCLlETAY6w.png zodiakas
+images/Spelione/2XoL1C5Q132IPhR.jpg PRISTATYMAS
+images/Spelione/yDrhgEkaMAVQ743.jpg PAPILJONAS
+images/Spelione/BErsUUeQtAzHQMV.png eserys
+images/Spelione/W5l5Tyztvm7sH9x.jpg PAMATAI
+images/Spelione/pNMUeM65Sa6LrQT.jpg laivas
+images/Spelione/VvfXrqQS0BKuSuL.jpg MARKATA
+images/Spelione/RgtFevVE5k0wNuK.jpg pabegimas
+images/Spelione/q7nCLdsBt3FHtto.jpg kamienas
+images/Spelione/8QqjTuD5J3U3G9v.jpg BRezINYS
+images/Spelione/o2gCYlbo32odtRL.jpg sviesa
+images/Spelione/BHNh26I93ZvPrhu.jpg IsSIVERzIMAS
+images/Spelione/310m36490001005669MM3rn1r06p0720P1646u212a5013aM4010u063a21c4430S733n310Sh0172649y0dn01d.png greitis
+images/Spelione/1107142M150450322y10121t81094ir0040M2088ad544341r8M10119Fia314091FrP833020r52hh2c4521apm42.png zirkles
+images/Spelione/HhBOmyffsFTCBhe.jpg ANKsTIS
+images/Spelione/T2vYwKTEKeivsha.jpg zEBENKsTIS
+images/Spelione/3d2OKz5aSRceXOZ.jpg SAMOJEDAS
+images/Spelione/ifh7RNJMammAibA.png akrobatas
+images/Spelione/rXWqn67qIzlBVC3.png pavarges
+images/Spelione/QWRME9Fmrs9IWr9.png kaktusas
+images/Spelione/zGFcp0YLqLYCYQk.jpg saskaita
+images/Spelione/DqjkvftUbvgXr5s.png vistide
+images/Spelione/bKjgmZ2il08FEs8.png gleives
+images/Spelione/eYlc9oiWRDdAVLn.png gvardietis
+images/Spelione/WtrvhWXxMWFGH6H.png lovyte
+images/Spelione/EKBJZ8uUzxkTL0Y.png dovana
+images/Spelione/milUbfwgiotobod.jpg SKELBTI
+images/Spelione/49a7S1MMS8M31P8a107614402059163t517cd0h5htt00u0049561a1330ay81714115r31570p7a40mr30028r3779.gif Ribotas atstumas
+images/Spelione/mgUScE0EqRUZhLb.png linija
+images/Spelione/tAVlZlKg9E0orN0.png pyragaitis
+images/Spelione/j4jz3o7szsuxvHY.jpg diplomas
+images/Spelione/mxtwvoqeXsdZbBs.png guma
+images/Spelione/EY08hgx8PFg8Ei3.png paslaptis
+images/Spelione/m8ejOLTB2AGr4xV.png traleris
+images/Spelione/DuQb45wlhcWbhdE.png burbulas
+images/Spelione/m1XLOFpkIQv765q.jpg bankas
+images/Spelione/KBn35uiiA60ebkL.jpg PAUKscIUKAS
+images/Spelione/0QT8WmwWYkb9oa2.jpg sypsena
+images/Spelione/Nvyy7AMgWEK19wr.jpg pieva
+images/Spelione/h5RTeXyUfQ2uzvp.jpg kleopatra
+images/Spelione/Xi2VavVXebahyc7.jpg PASIUNTINYS
+images/Spelione/4c2NpN3SBG7c948.jpg morze
+images/Spelione/kGAJwz3WxUhNelJ.jpg LaSTELe
+images/Spelione/be69RG8ojwKbrxr.jpg RELAKSACIJA
+images/Spelione/Wq8ttYb6KUz8XWo.jpg PADuMAVIMAS
+images/Spelione/lmUOoeDBRaFKwmq.png PUMPURAI
+images/Spelione/CH2cSgrKstNN57t.png puma
+images/Spelione/JK30BLg2F2Kcnou.png SKILTELe
+images/Spelione/fgqO1vK5qXvFBjS.png HASKIS
+images/Spelione/7is1rUkgp9uIa8v.jpg svajone
+images/Spelione/2kLbPyz1QLu2HK8.png SANTECHNIKAS
+images/Spelione/mlwEHvLrbRcMxov.jpg LIETIMAS
+images/Spelione/fkWD4AhLZCNJ1z4.jpg TESTAS
+images/Spelione/KTNAnvOxrsqFvm3.png ciaupas
+images/Spelione/mOMUem61xJiHIFJ.png cinamonas
+images/Spelione/YtCjLNORMfRAhtm.png barsukas
+images/Spelione/D7bmGBWEKMtLthr.jpg GERVe
+images/Spelione/Qjb6UrvQQfitwCq.png pompa
+images/Spelione/qNCX4Rc8Foa7MlA.png rasalas
+images/Spelione/PXTrnbVQU7JBQtm.jpg ugliukas
+images/Spelione/S3OAVrTemv9nug8.png MUSKATAS
+images/Spelione/QhTAQ3XxXir859t.png PAKUOTe
+images/Spelione/KKjamL5u8gaw3kG.jpg minia
+images/Spelione/sP1805040972e72M8aa467h6000108y4MW1027117101W0e13215212ad70p0323761e103d144d8ym2M81ny5t3415.jpg antras pasaulis
+images/Spelione/qx9B6uyw7hwHcza.jpg MARCIPANAS
+images/Spelione/tUjwWhOpgw6bH1k.jpg SIAURAS
+images/Spelione/8y2314a433p11M23rd21r702P122200h311000016c1049F15m2t0801h18170M9MF82402581r10iia4a4r212284.jpg debesys
+images/Spelione/WprZ0S88UTqKABq.jpg paciupti
+images/Spelione/mFexKBSEkyBb3SO.png PLesIKAS
+images/Spelione/pDx9nu6YBAher2o.jpg hidrantas
+images/Spelione/jfcoyXJOHgHd103.png sluota
+images/Spelione/k1zZGODrQp9QR4M.png voras
+images/Spelione/WXtbe22hrB7uaXu.jpg PRIEPLAUKA
+images/Spelione/lxrllY5Tewozvqq.png mintis
+images/Spelione/4F1319m02y0413c8310403112819984019rp51a8403r5MF040290321t811222Mi10a4r4h4820i323dha7M2r30P.jpg veliava
+images/Spelione/ovuix59rtCu7hWA.png kirpejas
+images/Spelione/YxcTJqrwcWkOjPR.jpg skaidre
+images/Spelione/Pd3eOU5Xysl91q3.png siuksles
+images/Spelione/7t2kFvvEMhlyzyR.png virsune
+images/Spelione/3jFy768r3aAizrC.jpg SUVENYRAS
+images/Spelione/NIGiCHqqr01SstV.jpg muilas
+images/Spelione/950VsGNYteiCYao.jpg cakros
+images/Spelione/9M530un04a6n1142419221d3SM1Sah1149u41440y1418906t09010954470m2001ypPy61a001M01321134595.jpg panorama
+images/Spelione/ge8m32Mm2YGo1hW.jpg EROZIJA
+images/Spelione/e5CGH2a2VzUkYsG.png ziovauti
+images/Spelione/HB6kqBYRVxfCT4R.png emu
+images/Spelione/3CQNXogsvstq9ie.jpg biblioteka
+images/Spelione/21T313u409M60u330ard14002500he20216M211yc9002h0061s3t994T02360m809M19342ra61a16Pp4105110e.jpg televizorius
+images/Spelione/LkYMBffb7J8yImK.png troskulys
+images/Spelione/GkHpHmdIIV5T1IA.jpg OCELOTAS
+images/Spelione/dt5iv78pUqZkeLl.jpg vamzdis
+images/Spelione/PPZGHSl5fI0JIwJ.png TORAS
+images/Spelione/aUS5WgXE6bN6c89.jpg STETOSKOPAS
+images/Spelione/9003695t61897M90090225p61T14994811T43eP2260a033M20M100u1ed5h0a19y2081ysa1759y291m95097u3.jpg gelezinkelis
+images/Spelione/0alb8xXs1w6dhaT.jpg OKAPIJA
+images/Spelione/ptAqqfbcUzyJULn.jpg vitrazas
+images/Spelione/8x2gW8hHik780D6.jpg TOTEMAS
+images/Spelione/yFazaCu5Kr1V8fR.png elnias
+images/Spelione/zV1dIjIpv5kAGZq.jpg LAUKINIS
+images/Spelione/r8102iF0Fyt3241h3M5182P51a83021hM414352496c1050518r1242009921a4401107030r4818d6M200mar4i2p.jpg tulpes
+images/Spelione/eDkhQoBUex3VHl7.png MARIONETe
+images/Spelione/Cj6yDhlfzV2g2B3.png zirafa
+images/Spelione/ctFSuzWbesPZ6MA.jpg NUSKAITYTI
+images/Spelione/ZNU3tLhFsuxHCrS.jpg tinginys
+images/Spelione/75aM01y170664u0020089y30514nm93316p0n53774430610153dPu50t5242a19MS426M11h0200a5093601Sy.jpg ekskavatorius
+images/Spelione/fpLWDzhZrfwx5Ao.jpg mechanikas
+images/Spelione/AMMURm23CzaIbjO.png pagrobimas
+images/Spelione/Yb4g4oyxCpRE0eR.jpg PLEDAS
+images/Spelione/Kai7wnl58fFqTVj.png antena
+images/Spelione/7XCQLhPThC3CwPP.png sauna
+images/Spelione/po5RpjouyKg8yHb.jpg sakalas
+images/Spelione/xkhMc9xuWfsWrJD.png balta
+images/Spelione/t2JnspWrFvfwyyN.jpg zibintas
+images/Spelione/QwMXnh2w24wp38U.jpg seka
+images/Spelione/wU0W6rGVdf8XG9F.png BAKTERIOFAGAS
+images/Spelione/NBgzjtY43F4onQ0.png slyva
+images/Spelione/UCe3Myprko5kHgc.png moai
+images/Spelione/8I6bnGcHZQLGKZM.jpg MUNcKINAS
+images/Spelione/p9JOd4YMMF6F0FG.png metimas
+images/Spelione/0UIwj4brJzBQ5t3.png LAISVe
+images/Spelione/4S3hu01M0n19n0811M034924y1t3d1142510a2u113241037410S257y6941P60p5m4a310aM0y390091039396.jpg zmogus voras
+images/Spelione/kGZg4YALPlng70t.jpg PUNKTUALUS
+images/Spelione/pYVNrM3IJvitqrC.jpg pusiausvyra
+images/Spelione/c7S9DEafJmmken7.jpg susilti
+images/Spelione/PXNWmJrQwpGYRQD.jpg PRISTATYMAS
+images/Spelione/pT1uDVjkzbfVREm.jpg sumas
+images/Spelione/CcuGleB3pH7VgCp.jpg samanas
+images/Spelione/pvXeOKTPfFwuKUY.jpg rytas
+images/Spelione/EhPTZl1rX1QEeN7.png sultys
+images/Spelione/fwISOMOQI4Fq9ai.jpg vienybe
+images/Spelione/zsGXKAHu36HSXBH.jpg senbernaras
+images/Spelione/5zm99L2SL9dbLc0.jpg KOMONDORAS
+images/Spelione/hxkDzWpqlRzQpaB.png smegenys
+images/Spelione/5bWpq4t8ifBaZtL.png mumija
+images/Spelione/wVgtabGCHz7vNBc.jpg DATULes
+images/Spelione/zb27jUqsSB1cu1f.jpg kausas
+images/Spelione/1d50t3r7u0362334at1463m7S4900a735117a435021St171M835a1Ma3h0y4102h8p0r9081399381011P6Mr306c1.gif avinas
+images/Spelione/54b7XUorsFRFdVq.jpg sunesioti
+images/Spelione/251S36y31m104n4a43y99d03u9Pp2S037hM320301019t2070130320501M2402n00113auMay1051711450480.jpg draugyste
+images/Spelione/QYEuP3dhjuXFI9l.jpg cementas
+images/Spelione/E5JK3jmHMkrEEXr.jpg lydeka
+images/Spelione/WKS7AxyYlrkaxET.jpg KOJOTAS
+images/Spelione/FThpHOaI0IIpnKA.png molis
+images/Spelione/GlO2DPaOdiPuNmS.png minkstas
+images/Spelione/uszkSb3cHHrRoLA.png burys
+images/Spelione/HzsA9pNfT9JwYtS.jpg pauskutis
+images/Spelione/PhwxQp9nu6hNdUH.png mokslininkas
+images/Spelione/DZ1Hhkr3h64kbyw.jpg SNIGIMAS
+images/Spelione/mra8012S095t43r23M16Ma99290y4M10111c181301h21104458d245062013013401943u143301855naa21AartdaS.jpg zole
+images/Spelione/KFoVAOR4sczRIT7.jpg SANTVARA
+images/Spelione/2KzFLI3R3QzUQHT.png kose
+images/Spelione/rt79E81ifxSelJ8.jpg PILIORIUS
+images/Spelione/ia155923ph030M7ya22M0c131010h2240P311311732d0248m8101r4FM4348110r06r018t21a044i2911F228r18.jpg egle
+images/Spelione/4UYWC7Yb2qtqbA2.jpg vargonai
+images/Spelione/PgCWtatweARdGTI.png dzenas
+images/Spelione/0u1200s864ya13a929M80yhu3228001180am29y209001152M9e9td92M49540pT01T145103044006P29e19818.jpg pieno putu plakiklis
+images/Spelione/VvE6QZlAkoJ6MsF.jpg slapias
+images/Spelione/wpr69ip8Jjrqtyz.jpg SUSITARIMAS
+images/Spelione/5g38Hsp5yUsFN6q.png egiptas
+images/Spelione/f58OjNwrZyYcvLl.jpg PRIPLOTI
+images/Spelione/VEbyHCCUoJLKe6r.png posedis
+images/Spelione/S4gwyGRwXNcOoR7.png PIEVELe
+images/Spelione/N74ZpbzfSn9WTIV.jpg SKAITMENINIS
+images/Spelione/oDbhz3JUgYYAMCB.jpg benamis
+images/Spelione/IjtcE8zwqkHVI3Y.jpg GREIHAUNDAS
+images/Spelione/EYy8sWD6q3g22Jj.png klausyti
+images/Spelione/I2ioLv8RNmTohoi.jpg pusiausvyra
+images/Spelione/24B0Vu138QmErUq.png vandenis
+images/Spelione/5M39b01vIqZ5S8S.png milteliai
+images/Spelione/XIzW19o2AJwa9id.jpg invazija
+images/Spelione/0lCDusqlugO6Z0p.jpg dygliuotis
+images/Spelione/04017871My230a734m137315t1a1h106t10079a18rt7d8u931M0pr272169S400057hS6034a96P0513a043M95c6r.gif skorpionas
+images/Spelione/LnmjxJbfBDY8UpI.png raumenys
+images/Spelione/nLKEKJLXmJjyvWK.png kumstis
+images/Spelione/5VqfADMVmIrIQBl.png gyslele
+images/Spelione/zlgIUozunfahjQb.jpg sala
+images/Spelione/Ddoznn2rDTMdv5Z.jpg gylis
+images/Spelione/rwfeU54Sl1ejEt0.jpg ORKESTRAS
+images/Spelione/MF7XJzmduOrE7FC.jpg bebras
+images/Spelione/h8V9soHfF5WbqTP.png natos
+images/Spelione/NcIcQgcqqhqRDqG.png pavadelis
+images/Spelione/SSwoQZlOfB08NUi.png KEPTI
+images/Spelione/nGXLMESAbqxp4ZL.png roze
+images/Spelione/LDPPI3JY6WDZqk3.png pjuklas
+images/Spelione/m8LUdDQQRzcs9V1.png riestainis
+images/Spelione/6c7aHnCVzjh0wMn.jpg restoranas
+images/Spelione/h2pn7403My0111M9340tau9532n007931a5201041027402y3007u0M8491S15292yPS292191m13a6001d2115.jpg spiziaus puodas
+images/Spelione/IPc8JTPqrCtfp6I.jpg tirti
+images/Spelione/Pg0HJ9lmHoLbbeB.jpg idegis
+images/Spelione/gF03j5zAIt9OknS.jpg VARzYMASIS
+images/Spelione/CeOvVwvQGHhdzDk.png zirkles
+images/Spelione/eGY6cSz67jEqe3y.png PASLYDO
+images/Spelione/3r43aSa01c0m1h312y072M1421r180936t5023890t410037M1h56d7077a11r96pM21171194PS755u9a151043a0t.gif zuvys
+images/Spelione/2RUj9FUH6egmmKv.png bananas
+images/Spelione/iug2qhUkVhZ9MZQ.png saka
+images/Spelione/PlnnjIodizSFQfq.png PORAS
+images/Spelione/Mr323W3BNhz0zHy.jpg STOUNHENDzas
+images/Spelione/RNVPLKK0uLwPD5P.png sirdis
+images/Spelione/XPMuBJGxPPII8ot.jpg begtakis
+images/Spelione/HFS2dtDSHTjBUZ5.jpg PARGRIUVIMAS
+images/Spelione/tpJR9Jus2Fl09yO.png sukurys
+images/Spelione/0QT8WmwWYwb9om2.jpg BRUKALAS
+images/Spelione/IhFLGAp08OIjEA1.jpg ANYzIUS
+images/Spelione/GseEd4TnRFHmOBb.jpg KAMBARINe
+images/Spelione/QsAJ6hqhzNB4BMJ.jpg orbita
+images/Spelione/7HEDSloaHRJG8MH.png antilope
+images/Spelione/ZYE3oZTU28urMvt.jpg SUSPAUSTI
+images/Spelione/ihQzBNIxPlksLWe.jpg POLIRAVIMAS
+images/Spelione/P4srP9raxwuesYL.jpg VERPSTAS
+images/Spelione/eaXwmk8CSQHztPu.jpg uzkarda
+images/Spelione/iyJH6pDjrtdyRhS.jpg KARABINAS
+images/Spelione/qXaAAT51PB6Y6wA.jpg dvidesimt
+images/Spelione/6W8Rjnew4luNPI9.jpg PRIEIGA
+images/Spelione/Syn2YVadfvzBy69.png flamingas
+images/Spelione/nWW71uLgJhT5UMl.jpg aktorius
+images/Spelione/N8Yt38MvzwGwpVA.png kardelis
+images/Spelione/CV5IR3KRZWwOXBc.png kosmonautas
+images/Spelione/sMbCUjMKaa3Ss8Q.png garsiai
+images/Spelione/TNA837ut5XCGyIM.png mangas
+images/Spelione/2111r5000410a451833910h0tpP00880a30h24181ci182y42F35040325a492d3220M0F19r1042iM3rM1r1m8178.jpg meile
+images/Spelione/IHmGkckQn85egxA.png tango
+images/Spelione/0a2tr137M9449P013030095a0115ac913t359S306474h35910107ar07603937156h81mu1r9SM6d41pa02836M1yt.gif sustoti draudziama
+images/Spelione/MYADhnnVDSVIOA4.png geizeris
+images/Spelione/yDbU016387CufTD.png gulbe
+images/Spelione/2J2KAkJ01hr7oEA.png vaiduoklis
+images/Spelione/uYj8NuSaBXrvbW7.jpg NEUROLOGIJA
+images/Spelione/abAZs89HJfcDMIG.png takas
+images/Spelione/qcFO0BRl2W7vnUt.jpg kakta
+images/Spelione/hWsvIDQNGszl5Dg.jpg LAIMINGAS
+images/Spelione/wVvTtLDtPgdnM4K.png berzas
+images/Spelione/IhsNZJLmBo2sKyp.jpg DURININKAS
+images/Spelione/9KadM8LSKorb9PD.png hiena
+images/Spelione/GHmg2eySkYq2YPy.png vartai
+images/Spelione/0QT8WmwWYwb9qm2.jpg spindulys
+images/Spelione/iC0F2LrdY2YzLYD.png zole
+images/Spelione/UDFxOyhGy0dTsIq.jpg BOKSERIS
+images/Spelione/9pkAEErOybx45LH.png bijunai
+images/Spelione/qYc5mZuzIvTwiOB.jpg ETIKETe
+images/Spelione/jRcanY5Ur5ljQ3N.png uostas
+images/Spelione/tMJYXdzAPVHVAPe.jpg lynas
+images/Spelione/ZOLbG6LnBv3a0OR.jpg tadzmahalas
+images/Spelione/s43mkYRpFqCKf4k.jpg PEKINAS
+images/Spelione/71050P08M25105y11p41100302a1315835nya311059dM4Sm0750Ma4936u44t021unh112005y560S90075192.jpg siurbele
+images/Spelione/KdmZtuBnpVJ130z.png VAIKstineti
+images/Spelione/521M851031824ua10yd933M40m9318431250031802nP4231S1y1925690000SyM0a003aupn70105t3h520044.jpg laseline
+images/Spelione/0waGx4PBBJE2AnJ.jpg melagis
+images/Spelione/vouIdQwpowbqSJ7.jpg PATINAS
+images/Spelione/SEnhvEtgnOJANzB.jpg PRATEKeTI
+images/Spelione/UKbnObBffQIAiKG.png kaukole
+images/Spelione/aZ73ykncNtSfC08.jpg penki
+images/Spelione/8P0v08oVZchftCe.png angelas
+images/Spelione/u29hbrR5BVkkqzv.png uodas
+images/Spelione/klFl9OXo1XzI6j3.png padanga
+images/Spelione/j4bAmCTLh5G9z82.png pilti
+images/Spelione/D1yqDcVOA48JiBt.jpg nestumas
+images/Spelione/6y10ut01ea5291931aT1222000210u2211sT9914M395y03M021409d20mh1105ye4008006a0pM92942489224P.jpg eko cigarete
+images/Spelione/UzFHfJSFb1cPDIH.png serksnas
+images/Spelione/vPxVZvRVrgaSngh.jpg IsBLYsKUSI
+images/Spelione/cqaexBUGjFCnLbu.png sportas
+images/Spelione/lv3kfYTbOGwZMyZ.png OPERATORIUS
+images/Spelione/u7DUgPdpgen05JQ.jpg GRANULe
+images/Spelione/pAZ4XkLAbbAuUuZ.png peleda
+images/Spelione/5j01BwBO4CtLDfx.png susalo
+images/Spelione/hrgdZti775TxmyM.jpg drozles
+images/Spelione/Z5MGfILxSdjcr4P.jpg ventiliacija
+images/Spelione/lnBotfhNSQ9euD2.png vanduo
+images/Spelione/XZbkAAoHxx5D6bF.png nosis
+images/Spelione/z00VCHHY5biIYzh.png putpele
+images/Spelione/A0TTGVRRQtJnWbA.png koldunai
+images/Spelione/W02NUWIi5QjxtaF.jpg snipas
+images/Spelione/SEIyHoy92vjYijN.jpg metalas
+images/Spelione/23fhSh3CMgzRHG9.jpg METRONOMAS
+images/Spelione/MQo4nIefxIGRtej.png svarstykles
+images/Spelione/ZO2NbzJqO9kffJ6.png istrigo
+images/Spelione/D343UUOsDpZG7Ql.jpg vakariene
+images/Spelione/uEs4zFzkuUX18nZ.png rukas
+images/Spelione/z753YqMoANxBKd8.jpg sardine
+images/Spelione/D84Y74BBfoCXpCJ.png laidyne
+images/Spelione/YyKVsY3HFsLw3Uv.jpg karstas
+images/Spelione/e5Q2th3O7HUIktK.jpg DRAKULA
+images/Spelione/YmdxPcyCMRTiZNi.png melionas
+images/Spelione/QFUltCoDNGvgSbd.png senas
+images/Spelione/xzpmpVPFVAuVXot.jpg KUPOLAS
+images/Spelione/wDTL7tGOTsFRITC.jpg vakcina
+images/Spelione/umaGbEV1OgPFDqd.jpg GENETA
+images/Spelione/g169NEBFQYVep9j.jpg zvaigzdynas
+images/Spelione/pDEpJDtKv9dwm0z.jpg gyvybe
+images/Spelione/RylZ4V5K3Mm5SGZ.jpg simtas
+images/Spelione/nwf8QdKsVxEPowx.jpg pamiseliai
+images/Spelione/cmOGOFgSN20uTBO.png derlius
+images/Spelione/plejZD0l4sFrPsy.jpg piktas
+images/Spelione/0um3024P409M893yh03a241004he84M0r10012291u0934dT079e3a6620c170M90853r2240a3p10111T7s2161t.jpg litas
+images/Spelione/ADANNJXAb64asVC.jpg OPERATORe
+images/Spelione/F5yJCxz2oXwJFbA.jpg STARAS
+images/Spelione/m1QAObtie6xBpVO.png tarakonas
+images/Spelione/sg3DEF7Aeo51IOB.png jaunieji
+images/Spelione/211aa0191rF9233d14835921311m4MaP240h50F14184t32pyM9221421i880833531i09087208h008cr4003Mr0r.png lietuva
+images/Spelione/RU8RrVuyRP83PTr.jpg MANDOLINA
+images/Spelione/fp4EXN7FnDeL0Tm.png baravykas
+images/Spelione/OmDWQ6bw6hg2QKA.jpg kazino
+images/Spelione/v6xORlF8Z64phhC.png padazas
+images/Spelione/40430y1820a6330173504nty05M07n4p2u2mM713y119451S797201Mh510au2S100311438Pd013827039a901.jpg muilo burbulas
+images/Spelione/PTiUTaiIj7WVbPD.jpg romenas
+images/Spelione/3wcNQI0MpFG9388.jpg KATASTROFA
+images/Spelione/5XpNpvSsc7Cfnx5.png sniegas
+images/Spelione/1vG6TR1URFCphz4.png bunkeris
+images/Spelione/jicCOVJmoMidknf.jpg prancuze
+images/Spelione/yqaYTGeGxZhdK95.jpg SVEIKATA
+images/Spelione/2084Pha11d0003r174504i43y134206r10019431242c14m5927M0212r081F0438268224p8r4t821aMi11M0Fa7h.png google
+images/Spelione/e7xq2JItT26YNrM.png vaikai
+images/Spelione/ArFdsD0KNV6A6FW.png miegamasis
+images/Spelione/73B2zaoQCp1oIdn.png grozis
+images/Spelione/IKuFpNDvHXXL65q.png budelis
+images/Spelione/t09zGb8tsX8Ylt8.png statine
+images/Spelione/VCkFjmiINirSvUP.jpg apertura
+images/Spelione/jTbLRqwI2qWs65M.jpg kortele
+images/Spelione/1uilocq3bQf5uEQ.jpg zeme
+images/Spelione/lNxcutyij5LIqA9.png riesas
+images/Spelione/k5S405mbUb430nB.png svarstykles
+images/Spelione/R6c8i2pftIWRjdE.jpg melyna
+images/Spelione/bBeLrwAt9pen3yF.jpg NETVARKA
+images/Spelione/wNt24uK7B3e0Top.jpg alkanas
+images/Spelione/ds6NcBemF2x31Hk.png krabas
+images/Spelione/PdqkhE50AOR2B8N.jpg arestas
+images/Spelione/k6nqJORQV8N8ZQJ.jpg KROSNIS
+images/Spelione/psF2t2u914zp470.jpg AUDINYS
+images/Spelione/4S111143834y6n0Sa530u011y3049u0p8009132362M3y011t91ad7404402P1Mh014m9128M16002501101a0n.png laiko juostos
+images/Spelione/rsXek09bODymeZr.png pavojus
+images/Spelione/OUd4zPI7SDigEAy.png daviklis
+images/Spelione/jlvFqyAz9ezHk6Z.jpg DIOGENAS
+images/Spelione/byrQMRmh3sMikWp.png skrybele
+images/Spelione/SGVdAtQCJSLBbSp.jpg CHIRURGAS
+images/Spelione/dS6Y0ry9iGsQKPF.jpg galiukas
+images/Spelione/IjbKEEI0qjdmDkc.png parasas
+images/Spelione/26NGtpuO0LC5JXF.jpg STIKLAS
+images/Spelione/DUkFXpHKp56Ahqj.png uztemimas
+images/Spelione/t9Jjaj0IknutId0.jpg SIAMO
+images/Spelione/2UeonF32BAaifOZ.png spastai
+images/Spelione/M6U8MhxWnAJiLD5.png ezys
+images/Spelione/LGlsME32F94Xd1D.png aitvaras
+images/Spelione/0kfkgztp6mJDtBv.jpg VOKALAS
+images/Spelione/qvFtMNTvwIjLqCT.jpg tingus
+images/Spelione/oQeD2ycwzaWghpn.png pedos
+images/Spelione/xvap7uhqkoNMqkY.jpg pelekautai
+images/Spelione/DaYGyucP3VclP4x.png begiai
+images/Spelione/JZpFAy6M2n9wlow.jpg kenedis
+images/Spelione/7sPQi9dInmmERB0.jpg dvyniai
+images/Spelione/P9vxBu9xUvALV4A.png samas
+images/Spelione/x8Nxa1IC11RrygM.jpg galaktika
+images/Spelione/uqa4rS7SKE2Xa4O.jpg SUTRIKIMAS
+images/Spelione/8Mraa4M9r90a70a13da8c379101094418471t185064319106y075h03p01rPSS4337929uMt023t115m471051761h.gif muitine
+images/Spelione/h2300410yMmy190116261166P4a1S434902023019au90n9019p121501y14dM175t4305u924aMn61041012S8.jpg mamutas
+images/Spelione/3L2ahKcuUyUzney.png ananasas
+images/Spelione/2BIIQsRPQHUPj5R.jpg TEISMAS
+images/Spelione/YVquNqg637p0lkX.jpg basovija
+images/Spelione/nRW0KqRgksdCfVa.png svyturys
+images/Spelione/NL5XsslLT6wWYSg.png voveraites
+images/Spelione/ZvHW2d5BMWIkFrU.png KANJONAS
+images/Spelione/phJc7Pw6g2lvMnU.png bambeti
+images/Spelione/0tA1xZqbSk8hASp.jpg kryptis
+images/Spelione/kskGNaqfUz2ddnZ.jpg plonas
+images/Spelione/4ny1611202m41S9aS5h0M4M00420n023103190714a6404td4297508up30490P0000761u193Ma01y3101y001.jpg sendaikciu turgus
+images/Spelione/BAqNCz8uX8o4hIf.jpg atsispaudimai
+images/Spelione/ryhAkPL3Osg6zZF.png IGNORUOTI
+images/Spelione/PMUfKqyqqUvvQgc.png durys
+images/Spelione/wf1kugbOa8EcvGI.jpg sOKIRUOTAS
+images/Spelione/11eDLM10BoCZsqf.png turiste
+images/Spelione/cMARM39oNot0Tfh.png zombis
+images/Spelione/2ym6M9yT1340000M9511290412902s290u0T2e2010080063tu9dp44h5129M152200a15a1a312444e000P2y22.jpg pakinktai arkliams
+images/Spelione/F5BNXyD1NSi4Yfz.jpg ekskavatorius
+images/Spelione/g7R0GVLEaeuvwAq.jpg HAMLETAS
+images/Spelione/IBoP1yd296t22v7.png LENTELe
+images/Spelione/e1Mck7U1MeqGhil.png buteliukas
+images/Spelione/P95P6mYm4NQDRW2.jpg radaras
+images/Spelione/8EBGijbTlwhCy58.jpg BABUINAS
+images/Spelione/PBJT0k0ZNfnlZk3.jpg ukininkas
+images/Spelione/IQ1dG1B9UEqzuWQ.png kaina
+images/Spelione/iPe2tYL64tJwUmE.jpg tracheja
+images/Spelione/l5S7TDru5G50C5O.png adata
+images/Spelione/agkyHeA3216ikGn.png SUPLOTI
+images/Spelione/21X2v8aVefwN5C2.png TAKSAS
+images/Spelione/iGi4NW6diqwJIJS.jpg KREIVe
+images/Spelione/qNSUwv2ACxHxaUa.jpg kometa
+images/Spelione/99yzzhe5Hmltw7z.jpg PALIAUBOS
+images/Spelione/2kLbPyz1QLu2HK7.png gele
+images/Spelione/WyBcafxlmkvP4mL.jpg issiputimas
+images/Spelione/VkjZN9btwPS9QXC.jpg gyvsidabris
+images/Spelione/012ar06yh7098510113704S9114098c0t331aa9704Md31901608aM5S107Mh35106Pt41m243r5p7u9tr7a9533002.gif jautis
+images/Spelione/Id3yq8Kg31rWbBQ.png tortas
+images/Spelione/5OGHWM3LhEzyJ3N.jpg plaukai
+images/Spelione/4b7v9zTQ0EYRKsG.png apelsinas
+images/Spelione/GPCcYjW9XvarFRZ.png oziaragis
+images/Spelione/W0gTl6eeAkteakm.png ORATORIUS
+images/Spelione/usFimCt6V0kxAhY.jpg sprogmenys
+images/Spelione/0QT8WmwWYwb9om1.jpg lunatikas
+images/Spelione/gPdv6e0qlM6jvU8.png VABALAS
+images/Spelione/PqWSeVbTRfcyiSm.jpg manometras
+images/Spelione/OlourY76UNU7I4u.jpg pegasas
+images/Spelione/1u29ya0146104010a5901240d4171n6yMy59P34002911214852t32011M102500241S1330p60h154Sun0M9ma.jpg kriause
+images/Spelione/nVTVOIXXjtDVR5N.jpg FILOSOFAS
+images/Spelione/0434m18040029958eMsa0922t213T97yd737e519yhM9335M21163au0999a110072810u09P02y671p0190998T.jpg buozgalviai
+images/Spelione/WL934QjunO5SyIe.png geltona
+images/Spelione/rn3MmSFPxNuTpE5.png LAIMeTOJA
+images/Spelione/VSZnXCAYULm1zt1.png lazda
+images/Spelione/clkE3BScpTxFaVt.png menulis
+images/Spelione/tAFDSno3dTu0dxs.jpg UzSAKYMAS
+images/Spelione/sJYSQvsKIfpzIpb.jpg NULEIDIMAS
+images/Spelione/asGDBGlD2GzAdsc.png apdovanojimas
+images/Spelione/3301034008321S2u5d1M60n90u7100027S1395189070da0061P6h8a3403082r6386nyM6crM43an3p322m1030.jpg kubas
+images/Spelione/AyIaHDhsY2ou1Vd.jpg pasiklysti
+images/Spelione/UzqQBsoKXu3KWyG.jpg TURBINA
+images/Spelione/RlT26YwM72HQ9V9.jpg kruva
+images/Spelione/VMNrgvghIa3SBJ9.jpg MENORA
+images/Spelione/xemdT4MuaoklFly.jpg energija
+images/Spelione/YHVU4EmEbp1iQBD.png kivis
+images/Spelione/zerO3OjqRjFtsyM.jpg stresas
+images/Spelione/qAdIwquYmnRzHDt.png vaisiai
+images/Spelione/VOG9Cxgj4HnWfwv.png mergele
+images/Spelione/4OBpw4uu8pjm8rP.jpg MATLANKIS
+images/Spelione/S2BPlC9jmAdBhrR.png krusa
+images/Spelione/PNFJ9m5voIbCc7N.jpg stendas
+images/Spelione/WUMhUK2GAeWkywX.jpg suvirintojas
+images/Spelione/z91tSacBXbMHCN1.jpg persu
+images/Spelione/TyHJns2VgI82OX6.jpg SUKLUPTI
+images/Spelione/4OBpw4uu8pjm8aP.jpg visciukas
+images/Spelione/3y323101nnS2h028000110a15511u00a00y9ty730Ma0131PM100515u8045440M0914S7893245dp38090032m.jpg Iliuzionistas
+images/Spelione/4nC50vdXyI2k8Br.jpg KOSMOSAS
+images/Spelione/XERFRONpXnG9bbV.png panda
+images/Spelione/SeySjYEZxz33ZP2.jpg juoda
+images/Spelione/XXNodpArPfI0JUL.png perlai
+images/Spelione/aqXMQ0i746N4usO.jpg spicas
+images/Spelione/5sNJGYt3uGw3ufO.jpg KUOKELIS
+images/Spelione/RL963sFAJNvkHmU.png druska
+images/Spelione/Zr8uojKCFzVZQwY.png nusikaltelis
+images/Spelione/T4rs6DlEhAlUIW6.jpg garai
+images/Spelione/2gm4S1HTZPB6edH.png kinas
+images/Spelione/6pubew3zWlXWnTc.jpg KAPUEIRA
+images/Spelione/jRq2O2RDRwmYD71.jpg NUOTOLINIS
+images/Spelione/hDIwLtH89bPZLrK.png galva
+images/Spelione/Edu1o0dEKD95iRj.jpg istorija
+images/Spelione/711a93434833S51M482207S0715p6401y091h135155d3a01125ny0yu00524t2219M0M68u9208nP200305am1.jpg salmas
+images/Spelione/iAkCxuO2Oimps7A.jpg sausas
+images/Spelione/KLPxjQhVHvYvsGU.jpg POSEIDONAS
+images/Spelione/CHXDPtSIv9cGqkS.png pasaka
+images/Spelione/IGzuUyUpno1EHOz.png grybai
+images/Spelione/pdOf2ysWk1U47v2.png korys
+images/Spelione/D1FFrjpnwByiK7L.jpg floriste
+images/Spelione/L12FEyACuaLDWes.png meniu
+images/Spelione/GDxuqD2p1Pcfs3J.jpg VAIKscIOTI
+images/Spelione/y6I7wzR4Yt9E0Bb.jpg imbieras
+images/Spelione/gXGU1xJPGNRolAN.png kruizas
+images/Spelione/815Ma1S091nSM02278n403u52m94p43111a0021y2153uh7300P211t35M505a98531790046y00094y82d2031.jpg panika
+images/Spelione/2ktVLLAtbvHXMIN.jpg lukstas
+images/Spelione/7Jn6mOTMLPTrf3p.png sienas
+images/Spelione/9d0310069100h391yea49ea205Pp23620157m10Tyu903939001M90041t02M121a0uT9y201920591M0s429002.jpg balsavimas
+images/Spelione/VrsEyZMz4mVl1ij.png kodas
+images/Spelione/sf4OWNk5Fx37xK7.png APRIBOJIMAS
+images/Spelione/BQOYwuJOslz3iKr.png ziedas
+images/Spelione/ysX5O2kFDUIGeuF.jpg plaktukas
+images/Spelione/MkFeL6DFSkco3DS.png orka
+images/Spelione/wQOG8Sjlo0iTVKG.png buldogas
+images/Spelione/9M221m223942y11e1009459d11330T92p508e16u020403003911sP11210100921M10t4a0u542M9yyaT1a49h6.jpg rasine diskriminacija
+images/Spelione/dEXw35F7ae3GFUL.jpg HIPNOZe
+images/Spelione/Xtcq6wiGFI4n4sc.jpg SIURREALIZMAS
+images/Spelione/qxylhsofmRyBeLj.png mama
+images/Spelione/gmkny2xhKmpS74z.jpg PSICHIATRAS
+images/Spelione/EZWKwZkL8n6Bix6.jpg BAISUS
+images/Spelione/G5y4tzkPt6rZIXT.jpg lygtis
+images/Spelione/Mcu9RblmuGcLfLm.png pudelis
+images/Spelione/HqnADJNwb0Tpx27.jpg BIGLIS
+images/Spelione/xrZj9Jy7zWAjU27.png prieskoniai
+images/Spelione/wU4Ehr736EmbHMp.jpg SPINDULIAI
+images/Spelione/MEQJsdErYIAseRz.png dzinas
+images/Spelione/rMX4IbyhdMoFVjv.png kepenys
+images/Spelione/5YABJ2XWYh1Lb1E.jpg BASENDzIS
+images/Spelione/KmdaE1y36bYLNcA.jpg SENDAIKcIAI
+images/Spelione/s6CYjdi9ayHVrBr.png tevas
+images/Spelione/bdBr7eJePqmsmxu.jpg MIEGAPELe
+images/Spelione/tFqGiYc6A5JWc0V.png lasas
+images/Spelione/2SuCc4ptn7OPr0h.jpg hipnozuoti
+images/Spelione/9QzDE04tvayysMq.jpg AMFITEATRAS
+images/Spelione/m5eaI7YGrNTSoRd.jpg aukstas
+images/Spelione/d4rlb6nV87Em2ew.png avinas
+images/Spelione/mDTL0rkPMStBSYi.png lesiai
+images/Spelione/eplm9vlhxILNF7m.jpg skunkas
+images/Spelione/AJa43ARpTZCMjC6.jpg karate
+images/Spelione/16a9m326n29641r583p9n3M22M0015u41071000d080h7a0a2712370900SP609r74nd31S019y73670c037u09M.jpg lauzas
+images/Spelione/AWJWxHnHFm399Dc.jpg ROBINZONAS
+images/Spelione/kXDQm4dupj9r9Uk.jpg nosferatu
+images/Spelione/OPhJRBtyYcQMFYv.png ANTIS
+images/Spelione/Yy22GhYsepAQwKL.png butelis
+images/Spelione/RJp9CeTLhoOVwrk.png lempute
+images/Spelione/r2a93y8430rh601m9380310S7a16h20041a07aMtt3r5c71537061u34922124p591d005700701M40P19101tSa75M.jpg zodiako zenklai
+images/Spelione/0sEHSorEmMXqaXX.jpg pasipirsimas
+images/Spelione/CWy7wflx7bEWgxo.jpg svaras
+images/Spelione/pH3dscoY9vBEVqB.png dantys
+images/Spelione/uGtT6jod1W1lSOS.png sernas
+images/Spelione/cnyIjHF38gixQ6W.jpg DVASININKAS
+images/Spelione/LANXwugG6bjbIva.png plauciai
+images/Spelione/l11slkfZH3sitBU.png kortele
+images/Spelione/WVCvkm6njLkgq5j.jpg briedis
+images/Spelione/AGLlBWPf4plz5sm.jpg TIKI
+images/Spelione/8Q9a28INYLBdXr7.jpg potvynis
+images/Spelione/0sEHSorEmMZqkXX.jpg metejas
+images/Spelione/HbdAVHPQdqbETwe.jpg ekskursija
+images/Spelione/n48XPGuZRHOK7Hb.jpg ROTORIUS
+images/Spelione/523n0u310M13pM0518y1194304t0919111S0n070102a943y94y0S2511122a0146113016u0942M9a00dPm1h4.jpg traku pilis
+images/Spelione/6tk5HIzJu5NmO28.png kvepalai
+images/Spelione/WPrkGNQqyH0S0VZ.jpg KLAKSONAS
+images/Spelione/QSSELV1YhXU0OJo.png pinigai
+images/Spelione/Y9k2HlJPEAMqJzd.jpg KAUcIUKAS
+images/Spelione/byqBU2xUg9AP9Md.jpg KAMsTIS
+images/Spelione/070883mPt1701u11p2071h365d3a03104a1a04St16hra75r021054S1969MrM755t913538091540a5c340M4458y5.gif mergele
+images/Spelione/hHuuwzf9TEmUVae.png pagalve
+images/Spelione/bMcGL0YhgsKYiem.png dykuma
+images/Spelione/5svq9c3OrvnLwLG.jpg SKRUZDeDA
+images/Spelione/ymSwkoVMwFERXDD.png pultas
+images/Spelione/BY44ual79nRX7ma.jpg RAUMENINGAS
+images/Spelione/70s0J6dKpDPd612.png policininkas
+images/Spelione/92aM0p2297264e095u0ay1222P36d4mt1u74e30300091hTs810110y7993019192T099590y7090450a2M1M130.jpg nuosliauza
+images/Spelione/axdBx6zTGJdDYT7.jpg PERISKOPAS
+images/Spelione/pGflyxUM5yxluHr.png bala
+images/Spelione/1vTOKwbDguURnz1.jpg PAMATAS
+images/Spelione/CcBBsAW8ZNOJDMQ.jpg MALAMUTAS
+images/Spelione/LQVBIVsN3KwkjZe.png choras
+images/Spelione/uwtjHF72gvQQW90.png ledas
+images/Spelione/AJm36AfXo7u4lsT.png caranga
+images/Spelione/24vl3XYIZLjCErW.jpg trumas
+images/Spelione/d7tnjMd62FeDg5z.jpg FOKSHAUNDAS
+images/Spelione/gDSdgR8xugGrWah.png vienuole
+images/Spelione/mLWuXTBajWBCcmz.jpg ATRAKCIONAI
+images/Spelione/Jk9WphHKoBjzrBP.png LAIKRAsTIS
+images/Spelione/FcUG6PDFceZgZq0.jpg slalomas
+images/Spelione/npBgRXVbYCTdknG.png murvine
+images/Spelione/iKpCPJuqww0Np7Y.jpg kritimas
+images/Spelione/OiFyIaGUyxSPffO.jpg kiklopas
+images/Spelione/WgreslBJDkN2f93.jpg kulturistas
+images/Spelione/xjVldfUNTb4LG1d.png RAUDONA
+images/Spelione/HPHby23RzSVmjqG.jpg iskyla
+images/Spelione/giejfyNFTj1ajfc.png banga
+images/Spelione/egcNT4aGm8J38j3.jpg KITOKS
+images/Spelione/pi0Sr70xiZ8w7PW.jpg NANOROBOTAS
+images/Spelione/5u4086001u9d7p01102yt504317M021064m901M5M01a221h1Te0092239072059s270T94aa4y229y0e1P20035.jpg savanoryste
+images/Spelione/3b6bCssbAdDw5QO.png moliugas
+images/Spelione/yXbaJGYbUVWzi0n.png antkaklis
+images/Spelione/deGGbZBLGhlz0oj.jpg gluosnis
+images/Spelione/E0KKyzNJKMoNDfd.jpg zYDRA
+images/Spelione/GiTE7DEUTuwuoz8.jpg gedimas
+images/Spelione/6C1vsUwvpX9jZxx.jpg lygis
+images/Spelione/sYjxevAErCzDkus.jpg granatas
+images/Spelione/8HEHKUBXzuKnDSO.jpg PALEISTI
+images/Spelione/x2mBfxKB49QDW5I.png zmogedra
+images/Spelione/F1125ra32404c13dm20493a144048p4101221411M20280y5404P3M09196404rF2r01iM2h83i6h162008rt8a708.jpg skype
+images/Spelione/PTDXsFIeJTfZQ4j.png REFLEKSOLOGIJA
+images/Spelione/FaGS5D3mk2dYhog.jpg GUOTAS
+images/Spelione/0594410739209124018hy6410t28M452P0303M05na8u1381n900y4Sd10ap5920M620455S0029m91u141ay80.jpg viesbutis
+images/Spelione/m1gpYS63DceKXKq.jpg DEVONREKSAS
+images/Spelione/QQGDONCmyziQori.jpg BARAKUDA
+images/Spelione/jMaGbwWRPiSWPOU.jpg KLONAS
+images/Spelione/aHHJbCnJM3nHGkC.png koralas
+images/Spelione/kTmmnoPA47lqW0t.png supynes
+images/Spelione/g4dbUatZrZ4HMrT.png sodas
+images/Spelione/6gZsawZxsFsaNFT.jpg MAGNOLIJA
+images/Spelione/2J2KAkJ01hr7oEK.png mokytoja
+images/Spelione/NZnEdWkGFMwsaVd.jpg geras
+images/Spelione/0oBzPbqxbM9rcOi.jpg sarkofagas
+images/Spelione/rHk4A1HQkEE06XX.jpg lava
+images/Spelione/WxZyi0vYAEd8zB1.png ciaudeti
+images/Spelione/Uud4qDvm4SPlFH9.png MONSTRAS
+images/Spelione/hHGd4RzkAE0uEmQ.jpg oblius
+images/Spelione/ZtkYGpuNTLfsCVp.png alergija
+images/Spelione/u4alsxBUtFiG21H.png tinklas
+images/Spelione/CeXZVdzFCBXY6l9.jpg CHULIGANAS
+images/Spelione/BCe7ofHYlWoGPVA.png atspaudas
+images/Spelione/7x26B6Tlu27b3ov.jpg taikinys
+images/Spelione/xsuRxNXftzbXy4O.jpg sarpejus
+images/Spelione/I6tKCfzNJD2kGhA.jpg sinapse
+images/Spelione/zcfnBRphQFfdyte.png jaunoji
+images/Spelione/3Fow5gqY9yqiTmr.png KOVINe GALVUTe
+images/Spelione/UNxuH7Ke2FKDXyb.jpg puodzius
+images/Spelione/4yjotBBcu3IsSC7.jpg JAUNIKLIS
+images/Spelione/njBU4debHhQqLiX.jpg KAPSULe
+images/Spelione/52Mau1M3140t33111041091230T8u021P6eea2r0694921c06244210s10200y0d431092M01m1pr9660h309T3ha.jpg penki
+images/Spelione/e1P7fpD8ESXphH9.png kurmis
+images/Spelione/18wgDjMQSuFnELO.png diskas
+images/Spelione/iCJx6rfUze9ViF5.png pavara
+images/Spelione/kumtLqWfRJ4yXdf.jpg blogas
+images/Spelione/9hc5MRr03dk2IFG.png alyvos
+images/Spelione/Y5Il3TRd26QHjSw.png perukas
+images/Spelione/rJ2wBZ8rW9J4djX.jpg receptas
+images/Spelione/ui2HS94VQiEQnQX.png VARPA
+images/Spelione/51M7rh1021108p800074855241F4293M147ay3M2r4r11215c8h322aa54i118F0014023289419m0t00Pi210d43r.jpg tvora
+images/Spelione/d6s243140193h4090u950tey3M139466491e090y20T45540110Pa969492a4T20aM249m270yp32912011u091M.jpg sluota
+images/Spelione/20We234637sWe50100p00310408019M027y8137191300h0368Pyn6m221e24125y41M0d841a1t4a54415ad0022dM.jpg katinelis
+images/Spelione/9IqBDQcXs45rh0S.png skausmas
+images/Spelione/LxlsFdpcSNcavE1.png minotauras
+images/Spelione/eCsQQ5HSWivqIWp.png begimas
+images/Spelione/0QT8WmaWYwb7aa2.jpg atsakymas
+images/Spelione/g1blHiYqHU0HuhV.png skyle
+images/Spelione/c7WUPKlHdz64fNF.png virtuve
+images/Spelione/FUMz5guqn8J2R61.jpg KRANKLYS
+images/Spelione/vgkQq48q91jdi5G.jpg melodija
+images/Spelione/KCerJWcpHNr58MZ.png seifas
+images/Spelione/PwwbkigOhxTNW6Z.jpg begalybe
+images/Spelione/PYJylLKJDobLLkF.jpg KONFETI
+images/Spelione/NjZiBFJRkfCuwCH.jpg BATIKA
+images/Spelione/hFAAYznHmSPCT9r.png upe
+images/Spelione/BXGtQF3FaNfppAH.png TAIKYTOJA
+images/Spelione/ymacqce5jYFjYMo.png ziurke
+images/Spelione/Gsu1Tv4Qp3fY2Eu.jpg sachta
+images/Spelione/9YPG4dlnI1bnhMa.jpg KOLIS
+images/Spelione/2ye4SGzz1kCxXJz.png faraonas
+images/Spelione/M282PF71a0105420004042044c0158hM181i19m05yhM02a051r5832p332290510181a1rit30254rF91r3d21044.jpg zalia
+images/Spelione/QKbzXxX2JJBH17K.png paprika
+images/Spelione/97kHk2LkyHQyo9y.jpg skalpelis
+images/Spelione/NsMaQnupqAUX7Vv.png kreida
+images/Spelione/0096an410M4u489aM11612001273249u520t4S4p000d023ym3059S933081n01a5640M1P411y9904501514hy.jpg rekonstrukcija
+images/Spelione/M6F7nleio5NLLSt.jpg MAITVANAGIS
+images/Spelione/OQx4dOAIMkK3CpD.jpg MASKAVIMASIS
+images/Spelione/eJQLgj76NfGxqQ3.jpg PAGUNDA
+images/Spelione/GkwpguJsfIcOqVm.jpg aukstis
+images/Spelione/yBp2Pmo72aLwyGm.png sekme
+images/Spelione/1M42S17ma5y137990330606hha5a10175p98t143a04Mr1M763au17rd9093t587t10c8070Sr90154511P91403273.gif saulys
+images/Spelione/wpL86cb4OEzAz7K.png stiuardese
+images/Spelione/yn9mHD1dAgbyNTH.jpg PUANSETIJA
+images/Spelione/gOjuHxThIFlqVrM.jpg data
+images/Spelione/QeYTInda6kv4JQ9.png banda
+images/Spelione/TelM8sOYJiIrrkG.png GRezTUVAS
+images/Spelione/76201M99335ay2P16039143S92m3208a4M1203S04tu00y60h01n64d4pnM10a014568533013308508y01u041.jpg bankrotas
+images/Spelione/kGXjgGGEoDptTfM.jpg zindukas
+images/Spelione/hzxGkNkKHVvzHH8.jpg smeline
+images/Spelione/BCw1JgCW2hfK0Qh.png lokys
+images/Spelione/KbsX9FIBnoqioae.jpg pusnis
+images/Spelione/lOfhxOwdA0LfybJ.png skrandis
+images/Spelione/XhLs1487Bpw2dRl.jpg MASALAS
+images/Spelione/7L3F73wgsSJkKQQ.png sauja
+images/Spelione/0wwGx4PBBJE2AnJ.jpg pelene
+images/Spelione/67yh0y48S047565u12d5201131414P01911apSM0y11232m04630432n02MMa072004a149n0t61u2902219711.jpg everestas
+images/Spelione/cCz5a8ot7m1qojD.jpg PLOKsTELe
+images/Spelione/FIXhlkWU17IQqDT.jpg MARMURAS
+images/Spelione/mYJ83psMGVfC13j.png mesedis
+images/Spelione/IMhEwRMRRxMxvvq.png aliejus
+images/Spelione/W8MMqpg6tfoM4fu.jpg sniego zmogus
+images/Spelione/1ooMOjKSz5irEAO.png karalius
+images/Spelione/iIcvI7jhbE7SRYE.png GARSAS
+images/Spelione/JeTcyM36pRl3SW5.png BIUSTAS
+images/Spelione/wglJVxgrGjBPfTu.jpg bure
+images/Spelione/XNNXVxFOJWsB4P3.png guolis
+images/Spelione/ajfpVBTG8Z3JHAZ.png ciau-ciau
+images/Spelione/bKUtGtqtAf7YA9i.png dantistas
+images/Spelione/dnIMKTpvsAEBLDJ.png banglente
+images/Spelione/7bea48yHnC7YFBf.jpg PROJEKTUOTOJAS
+images/Spelione/jN68ni1h628QFSr.jpg barti
+images/Spelione/y6ShZFbmXuf3B9e.png kasa
+images/Spelione/t0E2CS4bDtOcZcF.png KAMERA
+images/Spelione/1nRUehAMuqfwvvB.jpg kekstas
+images/Spelione/PEddrHlbvlIOq8J.png lakunas
+images/Spelione/aR4GVR9nDxo5zlV.jpg rasytojas
+images/Spelione/r848217r833cah20r8i530Fr244p22h1aM2381M41409010d8m091i5223y914104902t81108001042aM1912P33F.jpg karstas
+images/Spelione/zfmB4DV179hBZ6Q.png medus
+images/Spelione/HELSzSX61xgILIt.jpg DIPLOMATIJA
+images/Spelione/SVI1Wu2Q6jFxXK1.jpg SILUETAS
+images/Spelione/4dZbvPxHkqao8AI.jpg padeka
+images/Spelione/JdJC9Fstk4jz7NJ.jpg MASTIFAS
+images/Spelione/FkB7pShdbv20fWS.jpg KURJERIS
+images/Spelione/ydNoGbNPbfdZFS0.jpg kontrole
+images/Spelione/k2vROrwJual5Nn4.jpg HERAKLIS
+images/Spelione/Lmf3S85LdZMbJh3.png pirstas
+images/Spelione/cGe6PQHZv1uvCQd.jpg ARCHYVAS
+images/Spelione/x1EBpOlbXSBLJN9.png TINKLAS
+images/Spelione/17MGHKNHgnfInsK.jpg kardiograma
+images/Spelione/VpreFkhjf8nUIKN.png reples
+images/Spelione/XBZHuwT9mPoCXJ8.jpg NEATSARGUS
+images/Spelione/xAngEyeUyxRToQW.jpg KALMARAS
+images/Spelione/7nUChPvfh8Ep5zA.jpg kruvis
+images/Spelione/meDXYXFHd6Hwrrq.png tuba
+images/Spelione/t6op5C49E6DVGV6.jpg DANGORAIzIS
+images/Spelione/Y9a7QTeJdSWBgYL.jpg FOKUSININKAS
+images/Spelione/0xniuqHGtyrbknU.png SPAUDAS
+images/Spelione/PRPp8Uw9OWk0Rbt.png apsauga
+images/Spelione/82rM8NFMcrVMcKW.jpg DOBERMANAS
+images/Spelione/tphknDg5bxtJKBz.png siaubas
+images/Spelione/xmyjBWsJua8zxbW.png dvyniai
+images/Spelione/MtBcu5gxBKblruG.jpg spanielis
+images/Spelione/IQhth0JFrmUOc50.jpg PILIGRIMAS
+images/Spelione/KWWTqNfarMrjW9A.jpg lauzyti
+images/Spelione/j7RjhF7MXOSsS61.png SCHEMA
+images/Spelione/NVKhqeE8Dl5zKpe.jpg VILNA
+images/Spelione/0wwGx4PBBJE0AnJ.jpg rastelis
+images/Spelione/cGw8BL9QHgJWNBG.jpg GIRTAS
+images/Spelione/UxyypTlmHZrHrap.jpg meduza
+images/Spelione/rMMZLb19RHTjJQf.jpg VAMZDzIADANTIS
+images/Spelione/59212M9u4mT0601y2a00964u5091342h5110d050e0a1P1M3026052a5306p108561029T41401y90es12My10t9.jpg meteorologine stotele
+images/Spelione/6paQZfrwGM8PUSD.jpg valytojas
+images/Spelione/BryHggQnGAQmjfe.png boa
+images/Spelione/sSk4bVsDPFje1yN.jpg pastanga
+images/Spelione/6QPfN7KKqNY6gl3.png ikaltis
+images/Spelione/1VR7lLvWKDYqyYK.jpg trasa
+images/Spelione/LW8Sr1xPMHrq32Z.png beldimas
+images/Spelione/ModOwvq10PLx8i0.jpg KARNIZAS
+images/Spelione/HLLD4smNQY4y9vm.png lygu
+images/Spelione/03a749789554335a41317SMrp99ch811301t10116070h1mMr44730a06645604S431080840062aat14ud2P1y6Mtr.jpg lova
+images/Spelione/W4pL4KTdRcMRwwn.jpg keturi
+images/Spelione/VKqARGDtOISeZw2.jpg vairuoti
+images/Spelione/a1303079h71a3py9M10108334m024c673103r01rM7804a1S13161aSM0054538d0u1t6769459tt1ra803629h44P5.gif vezys
+images/Spelione/7Gv8aalWlnNSNaF.png lasisa
+images/Spelione/zPznPFfNUj171Mm.png papuga
+images/Spelione/r33a9m9858225M30h1M7331a0012F110734cd14M12y1111000i0r8t8rph102287202FPr31414i410481a403928.jpg puodelis
+images/Spelione/5g4cQ8rMUHmGKiz.jpg iSILAUzeLIS
+images/Spelione/02300100347618054M4h10ra212008111n24013rmPMyo40532Mn7100077915o2ac5d6t68391M2064p451hMa162.jpg zuikis
+images/Spelione/ckf7PWusWwy6Hom.jpg SIURPRIZAS
+images/Spelione/orkAECfZnYyZ0bR.jpg cipas
+images/Spelione/t5SrG8ALL02RssX.jpg SKILIMAS
+images/Spelione/Q0tXMxJRBcJIcrG.png sesi
+images/Spelione/ZOYfeu4j89lQNyi.png valymas
+images/Spelione/cLdmv65hMdILvvC.png viela
+images/Spelione/6zKSOMNXfBCZl88.jpg sietelis
+images/Spelione/0UIwj4brJzBQ5t4.png dzeusas
+images/Spelione/EYoHKF0Gmm0xGdU.jpg UzSMEIGTI
+images/Spelione/15r20h08r42r0122M3a02i7228182d410a80010h4cp3113F1ra008i1Ft4y1214P292008M205943m0041M234940.jpg saule
+images/Spelione/lTq7VajScZRYcxq.png plunksna
+images/Spelione/M47543102u120y34M8505y967S35h03605a0913124n6t2a1m11M111up743004260PS99n100131ay1000020d.jpg kalejimas
+images/Spelione/xoeqboP7rbZ2HYZ.png zidinys
+images/Spelione/XUuDj4BkFhMTUh1.jpg ANEMOMETRAS
+images/Spelione/mliYHVyDPnSrBt0.png BUIVOLAS
+images/Spelione/7E1gPQufrqyoSYw.jpg BAIMe
+images/Spelione/XDvfszcZVekWguK.jpg SUPERHEROJUS
+images/Spelione/9P791M5138m30646y4Mpa09024r0201u038661902Sr0a23h3031013u838c1d27M101r0420700a6n02d2S1n5042.jpg klaviatura
+images/Spelione/4Jnwab7HbPEqfaZ.png zIRNIAI
+images/Spelione/yxuIE3QIsupVzCp.png lupos
+images/Spelione/9jSkzWooOQNC4XN.jpg AMFORA
+images/Spelione/YYGbfWSB0VIbCDn.png zonglierius
+images/Spelione/X2MLtJWYOrbU5G8.png LAIsKININKAS
+images/Spelione/pUbOeXj185bWlXD.jpg PANKOLIS
+images/Spelione/W9JSZolW78iZ4lV.jpg AUDIOMETRIJA
+images/Spelione/010p706yr0m717h6h2S540P1105646419Mu870a12t8d0tra3t5a1113164c3943a13974aS3014M1311598r0070M6.jpg lempute
+images/Spelione/mvFFIMaoDOIpWPS.jpg TANDEMAS
+images/Spelione/6163yM1t02604T34041005600pu43u199972220h191mha6e8M3Ta1c2Pd21917100313126004reM10a1923r61s.jpg veduokle
+images/Spelione/5gHkhzk0k8HdZps.png TEISe
+images/Spelione/kRNnfz5oWOuWOWX.png BALETAS
+images/Spelione/mrU2o0UFuf8xlH1.jpg augimas
+images/Spelione/nkKzexNjowhZNnw.jpg nepataikymas
+images/Spelione/MJ54JcUKAbUq6Jk.png SMERKIMAS
+images/Spelione/iDXTbzvcgCy7UwG.jpg Dalmatinas
+images/Spelione/wVpXLNsJGsXyG5f.png ABORIGENAS
+images/Spelione/038p91033600210h01M3m0aMM04u3a4c017ht1177y511414t1a4a26t90aS17S54r19436337dr566007r883635P9.gif liutas
+images/Spelione/rZyqkNkVwSVPOCO.jpg LAMANTINAS
+images/Spelione/VPNyyPFG0kB57wb.png sunkus
+images/Spelione/6502004uSaM0t401S08h61y10y5n0913916u2P053341m0921672302a949533n11401314651pMMya700d0041.jpg antena
+images/Spelione/ItFVJE3fsfhtXcj.png persikas
+images/Spelione/A42S7JngeCypJIV.png vudu
+images/Spelione/xHe0KktAMhNhBxy.jpg LINKSMYBes
+images/Spelione/DsTDr1VKJjAJGbV.png mazgas
+images/Spelione/dpeAON7bJ5qle57.png skruostas
+images/Spelione/T3f3Q6YWETxjEwt.jpg PLAUTI
+images/Spelione/wNy9MsHQGYc8G7n.png LIEPSNA
+images/Spelione/UvFy2XJiLrY4haL.jpg SIRENA
+images/Spelione/ouns0ahNoutCUSU.png MEDITACIJA
+images/Spelione/UFOuEZ5HB9gNp75.jpg sarvai
+images/Spelione/OlXdXNprZcTrtPd.jpg zlugimas
+images/Spelione/hMTLQOYESOtPCa1.png VARVEKLIAI
+images/Spelione/KLyObtqIQFTBCyM.png teisejas
+images/Spelione/3GiQNh5tVVI3Xwt.png meile
+images/Spelione/O06nQzzO5NGiuVm.png manikiuras
+images/Spelione/O7lIWAjQdee8AzZ.jpg BRANDUOLYS
+images/Spelione/lcSyhdXrh8m59oB.png kirpimas
+images/Spelione/nm3Yp4adVhqBui4.jpg UzTVANKA
+images/Spelione/zUq518OxHRhRRp2.jpg pokalbis
+images/Spelione/kGwfjQPfWlgLTQt.jpg buozgalvis
+images/Spelione/rNv7uVpKG4k3u8s.jpg papludimys
+images/Spelione/ZsJouxTSJOZqI8h.jpg RAIBULIAVIMAS
+images/Spelione/98hPUyrzNhD90cx.jpg skardine
+images/Spelione/ENQEA4oskemwwzC.png inkstai
+images/Spelione/wWhYVduwKJbVACc.png kapitonas
+images/Spelione/PjKzD3AQPpHiBXH.jpg BRUNETeS
+images/Spelione/4rGCUbSKjtHg7tO.jpg profilis
+images/Spelione/TyTntKuAZRpk2xn.png grilis
+images/Spelione/IDuBC8rfxz9CLrL.png baidykle
+images/Spelione/V7kMPhpBRL3DkbJ.jpg lavina
+images/Spelione/OD25wuM4EVvHkZS.jpg ABATIJA
+images/Spelione/orPtGxwGqH907H0.jpg poetas
+images/Spelione/ginEjSTn7ynwgRP.jpg DIKTOFONAS
+images/Spelione/XEaWIqRZVUhYNLD.jpg imunitetas
+images/Spelione/H0WMzzHjHv9eazB.jpg figos
+images/Spelione/CEIJI8PKjWARXY3.jpg aureole
+images/Spelione/Zt4WMfuMKfM3n65.png tablete
+images/Spelione/0sEHSorEmMXqkXX.jpg DeMESIO
+images/Spelione/I6ZbzX5WHGylT28.jpg tunelis
+images/Spelione/KoBJCSo2sGmMDSm.png keptas
+images/Spelione/a7M124sda5051408801116d06M15y417d80220yeme01h833270630eWa02232p220P301660yn4174Wt35713417M4.jpg popajus
+images/Spelione/rqfChdO2GfOlD6h.png JuROS GeRYBeS
+images/Spelione/2TfuQU2b3CvaaOS.png mesininkas
+images/Spelione/woSRXgL9lHQMzK9.png hipis
+images/Spelione/10404y750488114rd47rP01c2420MM0FiF92014t333h2apa1M21ma3420130i51r01898428121hr202089219418.jpg jura
+images/Spelione/Cw3E9pL621jxsws.jpg SPOKSOTI
+images/Spelione/BeddwW8qENMd43c.png taure
+images/Spelione/p40M013494M5090S041n012y141t9003y10512adaa520n947112108642944M3312u901mPS3019y0064h201u.jpg krikscionybe
+images/Spelione/8KmsCB0kRlxes7f.png teptukas
+images/Spelione/FtnOQkxtp1PbEzZ.png rugstis
+images/Spelione/HTSXq3S27BwAo5C.png NEMIGA
+images/Spelione/vqNXU0GWC9nTtGC.jpg arbitras
+images/Spelione/79lZfXbsMdMqz45.jpg DEsIMT
+images/Spelione/VxMEc69ZX7UJqlz.png TROMBONAS
+images/Spelione/jZxNe1OTXCc0ZhW.jpg FAUNAS
+images/Spelione/h871Qo7vKyyM6pK.jpg SAUSAINIAI
+images/Spelione/JEGFFod8bsbbZWe.png juokdarys
+images/Spelione/XiDDQKyVSccfYvR.jpg vakarelis
+images/Spelione/8byAB2jkspMZ5Sa.jpg MIsiNYS
+images/Spelione/yOTsIEjgZFGBF7P.png lazda
+images/Spelione/zf78ZDQINQ15YGe.jpg brailio rastas
+images/Spelione/ytJKwIHNdrsOaIo.png kokosas
+images/Spelione/m3B4I926E9poBib.jpg rauksle
+images/Spelione/tc5BRVwt5jfK8Qv.jpg delione
+images/Spelione/Csg84OuvVsA1m8m.png LEVANDA
+images/Spelione/4CkFa0IroICcEb4.jpg stadionas
+images/Spelione/8jTbshrJ4odAWTV.jpg segtukas
+images/Spelione/ygWorRxsbrmTmro.jpg persalimas
+images/Spelione/tp0102110170u6002M3Mu28S90a13111292155923035y4My52171543709711n42710ad0304ny1Ph4071Sma7.jpg medikamentai
+images/Spelione/8WiIC0kLCg9xUDU.jpg BEKONAS
+images/Spelione/gbe8Bw22QRTyHCp.jpg ideja
+images/Spelione/28a2ra4hii0311Mh4F40489889130112ad21rm10210PFMy11341013rt218p14140c2Mr90758584133023088020.jpg puokste
+images/Spelione/1GR0AgJGBmFXyQK.jpg zeme
+images/Spelione/Qdtzpdd4rXGe6X6.png PLEKsNe
+images/Spelione/nZDCpQRflcQuuAA.png muzika
+images/Spelione/GB5CGTaTf47RC73.jpg skale
+images/Spelione/jQr8zDRdLcd7nVh.jpg lietus
+images/Spelione/zJD7hRMgceMOA8i.jpg varzovai
+images/Spelione/7EmXXbAiC8pz18r.png baterija
+images/Spelione/RLseCLKxTQxfxsf.png RAMBUTANAS
+images/Spelione/5gZ2INaV9kP29pf.jpg palete
+images/Spelione/datRaAuUMwWl6nn.jpg DEGLO NEseJAS
+images/Spelione/QJlTHTgdTRaPLso.png palapine
+images/Spelione/M4h0073355172914S1804p2u32360295239aa4t7445070ynP201u19d91M710a1M13509nym491040yS011900.jpg paaugliu nusikalstamumas
+images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
+    `;
+
+    function sleep(ms) {
+        return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function waitFor(selector, timeout = 5000) {
+        const existing = document.querySelector(selector);
+        if (existing) return existing;
+        
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                observer.disconnect();
+                resolve(null);
+            }, timeout);
+            
+            const observer = new MutationObserver(() => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    clearTimeout(timer);
+                    observer.disconnect();
+                    resolve(el);
+                }
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    }
+
+    function setNativeValue(el, value) {
+        const setter = Object.getOwnPropertyDescriptor(
+            Object.getPrototypeOf(el),
+            "value"
+        ).set;
+        setter.call(el, value);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    // ---- Instant redirect: "Kitas klausimas" ----
+    const link = document.querySelector('a[href="spelione"]');
+    if (link) {
+        for (let i = 0; i < 20; i++) {
+            if (link.textContent.includes("Kitas klausimas")) {
+                window.location.href = "https://xgm.lt/spelione";
+                return;
+            }
+            await sleep(200);
+        }
+    }
+
+    // ---- Spelione ----
+    const form = document.querySelector('form[action="spelione"]');
+    if (form) {
+        const img = form.querySelector('#spelioneImg');
+        if (img) {
+            for (let i = 0; i < 40; i++) {
+                if (img.src && img.src !== window.location.href) {
+                    const imgSrc = new URL(img.src).pathname.slice(1);
+                    const lines = localFileContents.trim().split('\n');
+                    
+                    for (const line of lines) {
+                        const [s, ...words] = line.trim().split(/\s+/);
+                        if (s === imgSrc) {
+                            const input = document.querySelector('#word');
+                            const submit = document.querySelector('input[value="Spėti"]');
+                            if (input && submit) {
+                                setNativeValue(input, words.join(' '));
+                                submit.click();
+                            }
+                            return;
+                        }
+                    }
+                    break;
+                }
+                await sleep(200);
+            }
+        }
+    }
+
+    // ---- data.txt helpers ----
+    async function fetchDataTxt() {
+        const res = await fetch(LOGGER_URL_VIEW);
+        const text = await res.text();
+        return text.replace(/<\/?pre>/g, "")
+            .split("\n")
+            .filter(l => l.trim());
+    }
+
+    async function getNextLine() {
+        const lines = await fetchDataTxt();
+        if (!lines.length) return null;
+        const line = lines[0];
+
+        await fetch(LOGGER_URL_DELETE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: line })
+        });
+
+        return line.trim();
+    }
+
+    // ---- Login ----
+    async function handleLogin() {
+        const userField = await waitFor("#user_field");
+        if (!userField) return;
+
+        const passField = document.querySelector("input[name='pass']");
+        const submitBtn = document.querySelector("input[type='submit'][value='Log In']");
+        if (!passField || !submitBtn) return;
+
+        const nick = await getNextLine();
+        if (!nick) return;
+
+        setNativeValue(userField, nick);
+        setNativeValue(passField, nick);
+        submitBtn.click();
+    }
+
+    // ---- Other handlers ----
+    function handleChatRedirect() {
+        if (document.querySelector("#minichat_tags")) {
+            window.location.href = "https://xgm.lt/spelione";
+        }
+    }
+
+    function handleAlreadyAnswered() {
+        if (document.body.innerText.includes("Sveikiname, jūs jau atsakėte į visus klausimus.")) {
+            window.location.href = "https://xgm.lt/about?ka=navy";
+        }
+    }
+
+    function handleLoggedOut() {
+        if (document.body.innerText.includes("Sėkmingai atsijungta.")) {
+            window.location.href = "https://xgm.lt/index";
+        }
+    }
+
+    function handleBans() {
+        if (document.body.innerText.includes("Norėdami nusiimti ban, siųskite")) {
+            localStorage.clear();
+            sessionStorage.clear();
+
+            document.cookie.split(";").forEach(cookie => {
+                const name = cookie.split("=")[0].trim();
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+            });
+
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    keys.forEach(key => caches.delete(key));
+                });
+            }
+
+            if ('indexedDB' in window && indexedDB.databases) {
+                indexedDB.databases().then(dbs => {
+                    dbs.forEach(db => {
+                        if (db.name) indexedDB.deleteDatabase(db.name);
+                    });
+                });
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => reg.unregister());
+                });
+            }
+
+            setTimeout(() => {
+                window.location.href = "https://xgm.lt/index";
+            }, 300);
+        }
+    }
+
+    function handleEurInput() {
+        const form = document.querySelector("form[action='game?siusti_litu&kam=navy']");
+        if (!form) return;
+
+        const eurInput = form.querySelector("#pz2");
+        if (!eurInput) return;
+
+        const match = document.body.innerText.match(/Turite eurų:\s*([\d.,]+)/);
+        if (!match) return;
+
+        const available = parseFloat(match[1].replace(",", "."));
+        const amount = available - 0.01;
+
+        if (amount < 0.01) {
+            window.location.href = "https://xgm.lt/game?atsijungti";
+            return;
+        }
+
+        setNativeValue(eurInput, amount.toFixed(2));
+
+        const submitButton = form.querySelector("input[type='submit'][value='Siųsti']");
+        submitButton?.click();
+    }
+
+    function handleTransferComplete() {
+        if (document.body.innerText.includes("Pervesta ;)")) {
+            window.location.href = "https://xgm.lt/game?atsijungti";
+        }
+    }
+
+    // ---- Run ----
+    await handleLogin();
+    handleChatRedirect();
+    handleAlreadyAnswered();
+    handleLoggedOut();
+    handleBans();
+    handleEurInput();
+    handleTransferComplete();
+
+})();
