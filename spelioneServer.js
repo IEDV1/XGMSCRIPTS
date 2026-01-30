@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 13;
+window.XGM_CORE_VERSION = 14;
 
 (async function () {
     'use strict';
@@ -1734,4 +1734,9 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     handleEurInput();
     handleTransferComplete();
 
+    setTimeout(() => {
+        console.log("[TM] 30s timeout reached, redirecting to index");
+        window.location.href = "https://xgm.lt/index";
+    }, 30000);
+        
 })();
