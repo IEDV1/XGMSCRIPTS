@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 14;
+window.XGM_CORE_VERSION = 15;
 
 (async function () {
     'use strict';
@@ -51,7 +51,12 @@ window.XGM_CORE_VERSION = 14;
     }
     
     if (!(await waitForAllowedIP())) return;
-
+    //timeout checkitiy
+    setTimeout(() => {
+        console.log("[TM] 30s timeout reached, redirecting to index");
+        window.location.href = "https://xgm.lt/index";
+    }, 30000);
+    
     // ---- Config ----
     const LOGGER_URL_APPEND = "http://www.684313168484.space/append";
     const LOGGER_URL_DELETE = "http://www.684313168484.space/delete";
@@ -1734,9 +1739,6 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     handleEurInput();
     handleTransferComplete();
 
-    setTimeout(() => {
-        console.log("[TM] 30s timeout reached, redirecting to index");
-        window.location.href = "https://xgm.lt/index";
-    }, 30000);
+
         
 })();
