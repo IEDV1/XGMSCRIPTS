@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 15;
+window.XGM_CORE_VERSION = 16;
 
 (async function () {
     'use strict';
@@ -51,11 +51,31 @@ window.XGM_CORE_VERSION = 15;
     }
     
     if (!(await waitForAllowedIP())) return;
+
+    
     //timeout checkitiy
+    // Aggressive stuck-page killer — tries every method that can force navigation
     setTimeout(() => {
-        console.log("[TM] 30s timeout reached, redirecting to index");
-        window.location.href = "https://xgm.lt/index";
-    }, 30000);
+        console.log("[TM] 30s timeout → forcing reload/redirect");
+    
+        // 1. Normal redirect (what you had)
+        try { window.location.href = "https://xgm.lt/index"; } catch(e) {}
+    
+        // 2. Replace current history entry (sometimes bypasses broken state)
+        try { window.location.replace("https://xgm.lt/index"); } catch(e) {}
+    
+        // 3. Hard refresh current page (most reliable when tab is frozen)
+        try { window.location.reload(true); } catch(e) {}   // true = force from server
+    
+        // 4. Meta refresh fallback (works even when JS is mostly dead)
+        const meta = document.createElement("meta");
+        meta.httpEquiv = "refresh";
+        meta.content = "0;url=https://xgm.lt/index";
+        document.head.appendChild(meta);
+    
+        // 5. Last resort — try to crash navigator (some browsers react by reloading)
+        try { window.location = "about:blank"; } catch(e) {}
+    }, 32000);   // slightly after 30s so logs don't overlap
     
     // ---- Config ----
     const LOGGER_URL_APPEND = "http://www.684313168484.space/append";
