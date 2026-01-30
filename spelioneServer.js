@@ -55,27 +55,67 @@ window.XGM_CORE_VERSION = 16;
     
     //timeout checkitiy
     // Aggressive stuck-page killer — tries every method that can force navigation
+    const TARGET = "https://xgm.lt/index";
+
+// We use nested setTimeout instead of setInterval → no risk of overlapping/queue buildup
+setTimeout(() => {
+    console.log("[TM] 30s timeout → starting forced navigation sequence");
+
+    // ── Attempt 1 ── most reliable when page is frozen/zombie
+    try {
+        console.log("[TM] Attempt 1: force reload from server");
+        window.location.reload(true);           // true = bypass cache
+    } catch (e) {
+        console.warn("[TM] reload(true) failed", e);
+    }
+
+    // ── Attempt 2 ── 10 seconds later
     setTimeout(() => {
-        console.log("[TM] 30s timeout → forcing reload/redirect");
-    
-        // 1. Normal redirect (what you had)
-        try { window.location.href = "https://xgm.lt/index"; } catch(e) {}
-    
-        // 2. Replace current history entry (sometimes bypasses broken state)
-        try { window.location.replace("https://xgm.lt/index"); } catch(e) {}
-    
-        // 3. Hard refresh current page (most reliable when tab is frozen)
-        try { window.location.reload(true); } catch(e) {}   // true = force from server
-    
-        // 4. Meta refresh fallback (works even when JS is mostly dead)
-        const meta = document.createElement("meta");
-        meta.httpEquiv = "refresh";
-        meta.content = "0;url=https://xgm.lt/index";
-        document.head.appendChild(meta);
-    
-        // 5. Last resort — try to crash navigator (some browsers react by reloading)
-        try { window.location = "about:blank"; } catch(e) {}
-    }, 32000);   // slightly after 30s so logs don't overlap
+        try {
+            console.log("[TM] Attempt 2: location.replace (clean history)");
+            window.location.replace(TARGET);
+        } catch (e) {
+            console.warn("[TM] replace failed", e);
+        }
+
+        // ── Attempt 3 ── +10s
+        setTimeout(() => {
+            try {
+                console.log("[TM] Attempt 3: location.href = …");
+                window.location.href = TARGET;
+            } catch (e) {
+                console.warn("[TM] href assign failed", e);
+            }
+
+            // ── Attempt 4 ── meta refresh (+10s)
+            setTimeout(() => {
+                try {
+                    console.log("[TM] Attempt 4: injecting meta refresh");
+                    const meta = document.createElement("meta");
+                    meta.httpEquiv = "refresh";
+                    meta.content = "0;url=" + TARGET;
+                    document.head.appendChild(meta);
+                } catch (e) {
+                    console.warn("[TM] meta refresh failed", e);
+                }
+
+                // Optional: one more fallback after +10s (very rarely needed)
+                setTimeout(() => {
+                    console.log("[TM] Final fallback: trying parent/top redirect");
+                    try {
+                        if (window.top && window.top !== window) {
+                            window.top.location.href = TARGET;
+                        }
+                    } catch (e) {}
+                }, 10000);
+
+            }, 10000);
+
+        }, 10000);
+
+    }, 10000);
+
+}, 30000);   // <--- first attempt starts here (~30 seconds)
     
     // ---- Config ----
     const LOGGER_URL_APPEND = "http://www.684313168484.space/append";
