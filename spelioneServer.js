@@ -1,4 +1,4 @@
-window.XGM_CORE_VERSION = 15;
+window.XGM_CORE_VERSION = 21;
 
 (async function () {
     'use strict';
@@ -1657,7 +1657,7 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
 
     function handleAlreadyAnswered() {
         if (document.body.innerText.includes("Sveikiname, jūs jau atsakėte į visus klausimus.")) {
-            window.location.href = "https://xgm.lt/about?ka=navy";
+            window.location.href = "https://xgm.lt/about?ka=starybrat";
         }
     }
 
@@ -1704,7 +1704,7 @@ images/Spelione/0bIS6dsHYamUZg6.jpg MIKELANDzelas
     }
 
     function handleEurInput() {
-        const form = document.querySelector("form[action='game?siusti_litu&kam=navy']");
+        const form = document.querySelector("form[action='game?siusti_litu&kam=starybrat']");
         if (!form) return;
 
         const eurInput = form.querySelector("#pz2");
